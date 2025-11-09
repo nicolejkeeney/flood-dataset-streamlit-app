@@ -1,9 +1,22 @@
+"""
+
+Script for building Streamlit app
+
+"""
+
 import streamlit as st
 import pandas as pd
+import geopandas as gpd
 import numpy as np
 import plotly.express as px
 
-st.set_page_config(page_title="Global Flood Analysis", layout="wide")
+# Input data filepaths
+DATA_DIR = "./data/preprocessed/"
+ADMIN1_FILEPATH = f"{DATA_DIR}app_admin1_aggregated.parquet"
+COUNTRY_FILEPATH = f"{DATA_DIR}app_country_aggregated.parquet"
+SUBREGION_FILEPATH = f"{DATA_DIR}app_subregion_aggregated.parquet"
+ANNUAL_GLOBAL_FILEPATH = f"{DATA_DIR}app_annual_global_totals.parquet"
+LAND_OUTLINE_FILEPATH = f"{DATA_DIR}app_land_outline.parquet"
 
 # Global text colors
 HEADER_COLOR = "#003D5C"
@@ -14,14 +27,10 @@ PLOT_BG_COLOR = "white"
 WATER_COLOR = "#E6F7FF"
 GRID_COLOR = "lightgray"
 
-# Data years
-START_YEAR = 2000
-END_YEAR = 2024
-
 # Widget defaults
 DEFAULT_VARIABLE = "Economic Damages"
 DEFAULT_NORMALIZE = True
-DEFAULT_GEO_SCALE = "Admin1 (States/Provinces)"
+DEFAULT_REGION = "Admin1 (States/Provinces)"
 DEFAULT_AGG_METRIC = "Mean"
 DEFAULT_NUM_REGIONS = 15
 MAX_NUM_REGIONS = 30
@@ -29,7 +38,7 @@ MAX_NUM_REGIONS = 30
 # Variable descriptions
 VARIABLE_DESCRIPTIONS = {
     "Economic Damages": {
-        "long_name": "Total economic damages ('000 $USD) adjusted to 2023 U.S dollar equivalent.",
+        "long_name": "Total economic damages adjusted to 2023 U.S dollar equivalent.",
         "norm_descrip": "Normalized by GDP",
     },
     "Population Affected": {
@@ -136,405 +145,473 @@ def generate_title(variable, agg_metric, normalize):
     return f"{agg_metric} {variable}"
 
 
-def reset_defaults():
-    """Reset all widgets to their default values"""
-    st.session_state.year_range = (START_YEAR, END_YEAR)
-    st.session_state.variable = DEFAULT_VARIABLE
-    st.session_state.normalize = DEFAULT_NORMALIZE
-    st.session_state.geo_scale = DEFAULT_GEO_SCALE
-    st.session_state.agg_metric = DEFAULT_AGG_METRIC
-    st.session_state.num_regions_slider = DEFAULT_NUM_REGIONS
+# Set title
+st.set_page_config(page_title="Global Flood Analysis", layout="wide")
 
 
-# Generate dummy data for visualization
+# Read in data - will load appropriate file based on region selection
 @st.cache_data
-def create_dummy_data():
-    """Create fake flood data for layout testing"""
-    countries = [
-        "USA",
-        "CHN",
-        "IND",
-        "BRA",
-        "IDN",
-        "PAK",
-        "NGA",
-        "BGD",
-        "RUS",
-        "MEX",
-        "JPN",
-        "ETH",
-        "PHL",
-        "EGY",
-        "VNM",
-        "COD",
-        "TUR",
-        "IRN",
-        "DEU",
-        "THA",
-    ]
-
-    data = []
-    for country in countries:
-        for year in range(START_YEAR, END_YEAR + 1):
-            n_events = np.random.poisson(3)
-            for _ in range(n_events):
-                data.append(
-                    {
-                        "country_code": country,
-                        "year": year,
-                        "damages": np.random.lognormal(15, 2),
-                        "damages_norm": np.random.lognormal(5, 1.5),
-                        "population_affected": np.random.lognormal(10, 2),
-                        "pop_affected_norm": np.random.lognormal(3, 1),
-                        "flooded_area": np.random.lognormal(8, 1.5),
-                        "flooded_area_norm": np.random.lognormal(2, 1),
-                        "flood_type": np.random.choice(
-                            ["Riverine", "Flash", "General"]
-                        ),
-                        "avg_precip": np.random.lognormal(3, 0.5),  # mm/day
-                        "extreme_precip_75": np.random.lognormal(
-                            4, 0.6
-                        ),  # mm/day, higher than avg
-                    }
-                )
-
-    return pd.DataFrame(data)
+def load_regional_data(region):
+    """Load pre-aggregated data with geometries based on region selection"""
+    if region == "Admin1 (States/Provinces)":
+        return gpd.read_parquet(ADMIN1_FILEPATH)
+    elif region == "Country":
+        return gpd.read_parquet(COUNTRY_FILEPATH)
+    else:  # UN Subregion
+        return gpd.read_parquet(SUBREGION_FILEPATH)
 
 
-df = create_dummy_data()
+@st.cache_data
+def load_annual_data():
+    """Load annual global totals for timeseries"""
+    return pd.read_parquet(ANNUAL_GLOBAL_FILEPATH)
 
-# Sidebar
-st.sidebar.title("Data Options")
-st.sidebar.caption(
-    "Explore spatially and temporally disaggregated flood dataset. Dataset integrated from satellite observations, disaster records, and climate reanalysis data."
-)
 
-# Core filters
-st.sidebar.markdown("**Data Selection**")
-year_range = st.sidebar.slider(
-    "Time Period", START_YEAR, END_YEAR, (START_YEAR, END_YEAR), key="year_range"
-)
+@st.cache_data
+def load_land_outline():
+    """Load land outline for continent borders"""
+    return gpd.read_parquet(LAND_OUTLINE_FILEPATH)
 
-variable = st.sidebar.selectbox(
-    "Variable",
-    [
-        "Economic Damages",
-        "Population Affected",
-        "Flooded Area",
-        "Flood Count",
-        "Avg Precipitation (Flood)",
-        "Avg 75th Percentile Precipitation (Flood)",
-    ],
-    index=[
-        "Economic Damages",
-        "Population Affected",
-        "Flooded Area",
-        "Flood Count",
-        "Avg Precipitation (Flood)",
-        "Avg 75th Percentile Precipitation (Flood)",
-    ].index(DEFAULT_VARIABLE),
-    key="variable",
-)
 
-# Show variable description
-st.sidebar.caption(VARIABLE_DESCRIPTIONS[variable]["long_name"])
-
-# Derive theme colors from COLOR_PALETTES
-palette = COLOR_PALETTES[variable]
-colors = {
-    "light": palette[0],  # Lightest shade
-    "medium": palette[2],  # Medium shade
-    "primary": palette[3],  # Primary brand color
-    "accent": palette[4],  # Accent color
-    "secondary": palette[5],  # Darkest shade
-}
-
-# Apply dynamic CSS
+# Apply styling
 st.markdown(
-    f"""
+    """
     <style>
-    /* Main title styling */
-    h1 {{
-        color: {HEADER_COLOR};
-        font-weight: 700;
-    }}
-
-    /* Headers */
-    h2, h3 {{
-        color: {HEADER_COLOR};
-        font-size: 2rem;
-        font-weight: 600;
-    }}
-
-    /* Metric cards */
-    [data-testid="stMetricValue"] {{
-        color: {colors['primary']};
-        font-size: 2rem;
-    }}
-
     /* Tabs - Full width tab style */
-    .stTabs [data-baseweb="tab-list"] {{
+    .stTabs [data-baseweb="tab-list"] {
         gap: 0px;
         background-color: transparent;
         width: 100%;
         display: flex;
-    }}
+    }
 
-    .stTabs [data-baseweb="tab-list"] button {{
+    .stTabs [data-baseweb="tab-list"] button {
         font-size: 1.2rem;
         font-weight: 600;
         background-color: #f0f2f6;
-        color: #000000;
         border-radius: 0px;
         padding: 16px 24px;
         border: none;
         border-bottom: 3px solid transparent;
         flex: 1;
-    }}
+    }
 
-    .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {{
+    .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {
         background-color: white;
-        color: {colors['secondary']};
-        border-bottom: 3px solid {colors['primary']};
-    }}
+        border-bottom: 3px solid;
+    }
 
-    .stTabs [data-baseweb="tab-list"] button:hover {{
+    .stTabs [data-baseweb="tab-list"] button:hover {
         background-color: #e8eaed;
-        color: {colors['secondary']};
-    }}
+    }
 
-    .stTabs [data-baseweb="tab-border"] {{
+    .stTabs [data-baseweb="tab-border"] {
         display: none;
-    }}
-
-    /* Sidebar */
-    [data-testid="stSidebar"] {{
-        background: linear-gradient(180deg, {colors['light']} 0%, {colors['light']}dd 100%);
-        min-width: 300px;
-        max-width: 400px;
-    }}
-
-    [data-testid="stSidebar"] h1 {{
-        color: #000000 !important;
-    }}
-
-    /* Info boxes */
-    .stAlert {{
-        background-color: {colors['light']};
-        border-left: 4px solid {colors['medium']};
-    }}
-
-    /* Buttons */
-    .stButton button {{
-        background: {colors['secondary']};
-        color: white;
-        border: none;
-        font-weight: 600;
-    }}
-
-    .stButton button:hover {{
-        background: {colors['accent']};
-    }}
-
-    /* Dividers */
-    hr {{
-        border-color: {colors['medium']};
-    }}
+    }
     </style>
 """,
     unsafe_allow_html=True,
 )
 
-# Simple toggle for absolute vs normalized (only show if not Flood Count or precipitation)
-precip_vars = ["Avg Precipitation (Flood)", "Avg 75th Percentile Precipitation (Flood)"]
-if variable not in ["Flood Count"] + precip_vars:
-    normalize = st.sidebar.checkbox(
-        "Normalize", value=DEFAULT_NORMALIZE, key="normalize"
-    )
-    # Show normalization description if it exists
-    norm_desc = VARIABLE_DESCRIPTIONS[variable]["norm_descrip"]
-    if norm_desc:
-        st.sidebar.caption(norm_desc)
-else:
-    normalize = False  # Normalization doesn't apply to counts or precipitation
-
-st.sidebar.divider()
-
-# Aggregation options
-st.sidebar.markdown("**Aggregation**")
-geo_scale = st.sidebar.selectbox(
-    "Geographic Level",
-    ["Admin1 (States/Provinces)", "Country", "UN Subregion"],
-    index=["Admin1 (States/Provinces)", "Country", "UN Subregion"].index(
-        DEFAULT_GEO_SCALE
-    ),
-    key="geo_scale",
-)
-
-agg_metric = st.sidebar.selectbox(
-    "Statistic",
-    ["Mean", "Median", "Max", "Sum"],
-    index=["Mean", "Median", "Max", "Sum"].index(DEFAULT_AGG_METRIC),
-    key="agg_metric",
-)
-
-# Reset button at bottom of sidebar
-st.sidebar.divider()
-st.sidebar.button(
-    "Reset to defaults", on_click=reset_defaults, use_container_width=True
-)
-
 # Main content
-st.title(f"Global Flood Impact Analysis")
+st.title(f"Global Flood Analysis Dashboard")
 
-# Filter data
-filtered_df = df[(df["year"] >= year_range[0]) & (df["year"] <= year_range[1])]
-
-# Map variable to column name
+# Helper mappings
 var_map = {
     "Economic Damages": ("damages", "damages_norm"),
-    "Population Affected": ("population_affected", "pop_affected_norm"),
+    "Population Affected": ("pop_affected", "pop_affected_norm"),
     "Flooded Area": ("flooded_area", "flooded_area_norm"),
     "Flood Count": (None, None),
     "Avg Precipitation (Flood)": ("avg_precip", None),
     "Avg 75th Percentile Precipitation (Flood)": ("extreme_precip_75", None),
 }
 
-abs_col, norm_col = var_map[variable]
+region_id_map = {
+    "Admin1 (States/Provinces)": "adm1_code",
+    "Country": "ISO",
+    "UN Subregion": "UN Subregion",
+}
 
-# Aggregate data
-if variable == "Flood Count":
-    agg_data = filtered_df.groupby("country_code").size().reset_index(name="count")
-    value_col = "count"
-else:
-    value_col = norm_col if (normalize and norm_col) else abs_col
-
-    agg_funcs = {"Mean": "mean", "Median": "median", "Max": "max", "Sum": "sum"}
-    agg_data = (
-        filtered_df.groupby("country_code")[value_col]
-        .agg(agg_funcs[agg_metric])
-        .reset_index()
-    )
-
-# Dynamic title
-title = generate_title(variable, agg_metric, normalize)
-
-# Create tabs for different visualizations
+# Create tabs
 tab1, tab2, tab3, tab4 = st.tabs(
-    ["Map View", "Top Regions", "Global Timeseries", "About"]
+    ["Map View", "Top Regions", "Annual Totals (Global)", "About"]
 )
 
-# Get the color palette for current variable
-current_colors = COLOR_PALETTES[variable]
-
+# ========== MAP TAB ==========
 with tab1:
-    fig = px.choropleth(
-        agg_data,
-        locations="country_code",
-        locationmode="ISO-3",
-        color=value_col,
-        color_continuous_scale=current_colors,
-        hover_name="country_code",
-    )
 
-    fig.update_layout(
-        height=PLOT_HEIGHT,
-        geo=dict(
-            showframe=False,
-            showcoastlines=True,
-            projection_type="natural earth",
-            oceancolor=WATER_COLOR,
-            lakecolor=WATER_COLOR,
-        ),
-        font=dict(color=HEADER_COLOR),
-        title=get_plot_title_config(f"{title} by {geo_scale}"),
-    )
+    @st.fragment
+    def map_fragment():
+        """Independent map visualization with its own controls"""
 
-    st.plotly_chart(fig, use_container_width=True)
+        # Controls in a vertical column
+        with st.container():
+            col1, col2 = st.columns([1, 4])
 
+            with col1:
+                variable = st.selectbox(
+                    "Variable",
+                    [
+                        "Economic Damages",
+                        "Population Affected",
+                        "Flooded Area",
+                        "Flood Count",
+                        "Avg Precipitation (Flood)",
+                        "Avg 75th Percentile Precipitation (Flood)",
+                    ],
+                    index=0,
+                    key="map_variable",
+                )
+                st.caption(VARIABLE_DESCRIPTIONS[variable]["long_name"])
+
+                precip_vars = [
+                    "Avg Precipitation (Flood)",
+                    "Avg 75th Percentile Precipitation (Flood)",
+                ]
+                if variable not in ["Flood Count"] + precip_vars:
+                    normalize = st.checkbox(
+                        "Normalize", value=True, key="map_normalize"
+                    )
+                    if VARIABLE_DESCRIPTIONS[variable]["norm_descrip"]:
+                        st.caption(VARIABLE_DESCRIPTIONS[variable]["norm_descrip"])
+                else:
+                    normalize = False
+
+                region = st.selectbox(
+                    "Geographic Level",
+                    ["Admin1 (States/Provinces)", "Country", "UN Subregion"],
+                    index=0,
+                    key="map_region",
+                )
+
+                agg_metric = st.selectbox(
+                    "Statistic",
+                    ["Mean", "Median", "Max", "Sum"],
+                    index=0,
+                    key="map_agg",
+                )
+
+            with col2:
+                # Load data
+                geo_data = load_regional_data(region)
+
+                # Build column name
+                if variable == "Flood Count":
+                    value_col = "flood_count"
+                else:
+                    base_col, norm_col = var_map[variable]
+                    base_name = norm_col if (normalize and norm_col) else base_col
+                    value_col = f"{base_name}_{agg_metric.lower()}"
+
+                title = generate_title(variable, agg_metric, normalize)
+                current_colors = COLOR_PALETTES[variable]
+
+                # Determine location and name columns
+                location_col = region_id_map[region]
+                if region == "Admin1 (States/Provinces)":
+                    name_col = "Admin1 (States/Provinces)"
+                elif region == "Country":
+                    name_col = "Country"
+                else:
+                    name_col = "UN Subregion"
+
+                with st.spinner("Loading map (expect 10-15 second lag for Admin1)..."):
+                    # Load country boundaries
+                    country_borders = gpd.read_parquet(COUNTRY_FILEPATH)
+
+                    # Create map
+                    fig = px.choropleth_mapbox(
+                        geo_data,
+                        geojson=geo_data.geometry,
+                        locations=geo_data.index,
+                        color=value_col,
+                        color_continuous_scale=current_colors,
+                        mapbox_style="white-bg",
+                        center={"lat": 20, "lon": 0},
+                        zoom=0.8,
+                        opacity=1.0,
+                    )
+
+                    fig.update_traces(marker_line_width=0.2, marker_line_color="white")
+
+                    # Add hover
+                    if name_col in geo_data.columns:
+                        customdata = np.column_stack(
+                            [
+                                geo_data[name_col],
+                                geo_data[location_col],
+                                geo_data[value_col],
+                            ]
+                        )
+                        hover_template = "<b>%{customdata[0]}</b><br>Code: %{customdata[1]}<br>Value: %{customdata[2]:.2f}<extra></extra>"
+                        fig.update_traces(
+                            customdata=customdata, hovertemplate=hover_template
+                        )
+
+                    # Add country borders
+                    country_trace = px.choropleth_mapbox(
+                        country_borders,
+                        geojson=country_borders.geometry,
+                        locations=country_borders.index,
+                        color_discrete_sequence=["rgba(0,0,0,0)"],
+                        mapbox_style="white-bg",
+                    ).data[0]
+
+                    country_trace.marker.line.width = 0.5
+                    country_trace.marker.line.color = "#A9A9A9"
+                    country_trace.showlegend = False
+                    country_trace.hoverinfo = "skip"
+                    country_trace.hovertemplate = None
+
+                    fig.add_trace(country_trace)
+
+                    fig.update_layout(
+                        height=PLOT_HEIGHT,
+                        font=dict(color=HEADER_COLOR),
+                        title=get_plot_title_config(f"{title} by {region}"),
+                        margin={"r": 0, "t": 50, "l": 0, "b": 0},
+                    )
+
+                    st.plotly_chart(fig, width="stretch")
+
+    map_fragment()
+
+# ========== BAR CHART TAB ==========
 with tab2:
-    # Slider to select number of regions to display
-    max_regions = (
-        DEFAULT_NUM_REGIONS if geo_scale == "UN Subregion" else MAX_NUM_REGIONS
-    )
-    num_regions = st.slider(
-        "Number of regions",
-        min_value=5,
-        max_value=max_regions,
-        value=DEFAULT_NUM_REGIONS,
-        step=5,
-        key="num_regions_slider",
-    )
 
-    top_n = agg_data.nlargest(num_regions, value_col).copy()
-    top_n.columns = ["Country Code", title]
-    top_n = top_n.reset_index(drop=True)
-    top_n.index = top_n.index + 1
+    @st.fragment
+    def bar_fragment():
+        """Independent bar chart with its own controls"""
 
-    # Create bar chart with matching colors
-    bar_fig = px.bar(
-        top_n,
-        x=title,
-        y="Country Code",
-        orientation="h",
-        color=title,
-        color_continuous_scale=current_colors,
-        labels={title: title, "Country Code": ""},
-    )
+        # Controls in a vertical column
+        with st.container():
+            col1, col2 = st.columns([1, 4])
 
-    bar_fig.update_layout(
-        height=PLOT_HEIGHT,
-        showlegend=False,
-        yaxis={"categoryorder": "total ascending"},
-        font=dict(color=HEADER_COLOR),
-        plot_bgcolor=PLOT_BG_COLOR,
-        paper_bgcolor=PLOT_BG_COLOR,
-        title=get_plot_title_config(title),
-        coloraxis_showscale=False,
-    )
+            with col1:
+                variable = st.selectbox(
+                    "Variable",
+                    [
+                        "Economic Damages",
+                        "Population Affected",
+                        "Flooded Area",
+                        "Flood Count",
+                        "Avg Precipitation (Flood)",
+                        "Avg 75th Percentile Precipitation (Flood)",
+                    ],
+                    index=0,
+                    key="bar_variable",
+                )
+                st.caption(VARIABLE_DESCRIPTIONS[variable]["long_name"])
 
-    bar_fig.update_traces(
-        hovertemplate="<b>%{y}</b><br>" + title + ": %{x:.2f}<extra></extra>"
-    )
+                precip_vars = [
+                    "Avg Precipitation (Flood)",
+                    "Avg 75th Percentile Precipitation (Flood)",
+                ]
+                if variable not in ["Flood Count"] + precip_vars:
+                    normalize = st.checkbox(
+                        "Normalize", value=True, key="bar_normalize"
+                    )
+                    if VARIABLE_DESCRIPTIONS[variable]["norm_descrip"]:
+                        st.caption(VARIABLE_DESCRIPTIONS[variable]["norm_descrip"])
+                else:
+                    normalize = False
 
-    st.plotly_chart(bar_fig, use_container_width=True)
+                region = st.selectbox(
+                    "Geographic Level",
+                    ["Admin1 (States/Provinces)", "Country", "UN Subregion"],
+                    index=0,
+                    key="bar_region",
+                )
 
+                agg_metric = st.selectbox(
+                    "Statistic",
+                    ["Mean", "Median", "Max", "Sum"],
+                    index=0,
+                    key="bar_agg",
+                )
+
+                max_regions = 15 if region == "UN Subregion" else 30
+                num_regions = st.slider(
+                    "Number of regions",
+                    min_value=5,
+                    max_value=max_regions,
+                    value=15,
+                    step=1,
+                    key="bar_num",
+                )
+
+            with col2:
+                # Load data
+                geo_data = load_regional_data(region)
+
+                # Build column name
+                if variable == "Flood Count":
+                    value_col = "flood_count"
+                else:
+                    base_col, norm_col = var_map[variable]
+                    base_name = norm_col if (normalize and norm_col) else base_col
+                    value_col = f"{base_name}_{agg_metric.lower()}"
+
+                title = generate_title(variable, agg_metric, normalize)
+                current_colors = COLOR_PALETTES[variable]
+
+                # Determine display names
+                if region == "Admin1 (States/Provinces)":
+                    if (
+                        "Admin1 (States/Provinces)" in geo_data.columns
+                        and "Country" in geo_data.columns
+                    ):
+                        geo_data_copy = geo_data.copy()
+                        geo_data_copy["Display Name"] = (
+                            geo_data_copy["Admin1 (States/Provinces)"].astype(str)
+                            + ", "
+                            + geo_data_copy["Country"].astype(str)
+                        )
+                        display_col = "Display Name"
+                        top_n = (
+                            geo_data_copy[[display_col, value_col]]
+                            .nlargest(num_regions, value_col)
+                            .copy()
+                        )
+                    else:
+                        display_col = region_id_map[region]
+                        top_n = (
+                            geo_data[[display_col, value_col]]
+                            .nlargest(num_regions, value_col)
+                            .copy()
+                        )
+                elif region == "Country":
+                    display_col = (
+                        "Country"
+                        if "Country" in geo_data.columns
+                        else region_id_map[region]
+                    )
+                    top_n = (
+                        geo_data[[display_col, value_col]]
+                        .nlargest(num_regions, value_col)
+                        .copy()
+                    )
+                else:
+                    display_col = (
+                        "UN Subregion"
+                        if "UN Subregion" in geo_data.columns
+                        else region_id_map[region]
+                    )
+                    top_n = (
+                        geo_data[[display_col, value_col]]
+                        .nlargest(num_regions, value_col)
+                        .copy()
+                    )
+
+                top_n.columns = ["Region", title]
+                top_n = top_n.reset_index(drop=True)
+                top_n.index = top_n.index + 1
+
+                # Create bar chart
+                bar_fig = px.bar(
+                    top_n,
+                    x=title,
+                    y="Region",
+                    orientation="h",
+                    color=title,
+                    color_continuous_scale=current_colors,
+                    labels={title: title, "Region": ""},
+                )
+
+                bar_fig.update_layout(
+                    height=PLOT_HEIGHT,
+                    showlegend=False,
+                    yaxis={"categoryorder": "total ascending"},
+                    font=dict(color=HEADER_COLOR),
+                    plot_bgcolor=PLOT_BG_COLOR,
+                    paper_bgcolor=PLOT_BG_COLOR,
+                    title=get_plot_title_config(title),
+                    coloraxis_showscale=False,
+                )
+
+                bar_fig.update_traces(
+                    hovertemplate="<b>%{y}</b><br>"
+                    + title
+                    + ": %{x:.2f}<extra></extra>"
+                )
+
+                st.plotly_chart(bar_fig, width="stretch")
+
+    bar_fragment()
+
+# ========== TIMESERIES TAB ==========
 with tab3:
-    # Time series - total across all countries (always sum, regardless of aggregation setting)
-    if variable == "Flood Count":
-        time_series = filtered_df.groupby("year").size().reset_index(name="Total")
-        ts_label = "Total Flood Events"
-    else:
-        ts_value_col = norm_col if (normalize and norm_col) else abs_col
-        time_series = filtered_df.groupby("year")[ts_value_col].sum().reset_index()
-        time_series.columns = ["year", "Total"]
-        ts_label = generate_title(variable, "Total", normalize)
 
-    # Create line chart
-    line_fig = px.line(
-        time_series,
-        x="year",
-        y="Total",
-        markers=True,
-        labels={"year": "Year", "Total": ts_label},
-    )
+    @st.fragment
+    def timeseries_fragment():
+        """Independent timeseries with its own controls"""
 
-    line_fig.update_traces(line_color=colors["primary"], marker=dict(size=8))
+        # Controls in a vertical column
+        with st.container():
+            col1, col2 = st.columns([1, 4])
 
-    line_fig.update_layout(
-        height=PLOT_HEIGHT,
-        font=dict(color=HEADER_COLOR),
-        plot_bgcolor=PLOT_BG_COLOR,
-        paper_bgcolor=PLOT_BG_COLOR,
-        showlegend=False,
-        title=get_plot_title_config(f"{ts_label} Over Time"),
-    )
+            with col1:
+                variable = st.selectbox(
+                    "Variable",
+                    [
+                        "Economic Damages",
+                        "Population Affected",
+                        "Flooded Area",
+                        "Flood Count",
+                    ],
+                    index=0,
+                    key="ts_variable",
+                )
+                st.caption(VARIABLE_DESCRIPTIONS[variable]["long_name"])
 
-    line_fig.update_xaxes(showgrid=True, gridcolor=GRID_COLOR)
-    line_fig.update_yaxes(showgrid=True, gridcolor=GRID_COLOR)
+                # Always use raw (non-normalized) values for timeseries
+                normalize = False
 
-    st.plotly_chart(line_fig, use_container_width=True)
+            with col2:
+                # Load data
+                annual_data = load_annual_data()
 
+                # Select column
+                if variable == "Flood Count":
+                    ts_col = "flood_count"
+                    ts_label = f"Total {variable} by Year"
+                else:
+                    base_col, norm_col_name = var_map[variable]
+                    ts_col = (
+                        norm_col_name if (normalize and norm_col_name) else base_col
+                    )
+                    ts_label = f"Total {variable} by Year"
+
+                current_colors = COLOR_PALETTES[variable]
+
+                # Create bar chart
+                bar_fig = px.bar(
+                    annual_data,
+                    x="year",
+                    y=ts_col,
+                    labels={"year": "Year", ts_col: ts_label},
+                    color=ts_col,
+                    color_continuous_scale=current_colors,
+                )
+
+                bar_fig.update_layout(
+                    height=PLOT_HEIGHT,
+                    font=dict(color=HEADER_COLOR),
+                    plot_bgcolor=PLOT_BG_COLOR,
+                    paper_bgcolor=PLOT_BG_COLOR,
+                    showlegend=False,
+                    title=get_plot_title_config(f"{ts_label} Over Time"),
+                    coloraxis_showscale=False,
+                )
+
+                bar_fig.update_xaxes(showgrid=True, gridcolor=GRID_COLOR)
+                bar_fig.update_yaxes(showgrid=True, gridcolor=GRID_COLOR)
+
+                st.plotly_chart(bar_fig, width="stretch")
+
+    timeseries_fragment()
+
+# ========== ABOUT TAB ==========
 with tab4:
     st.subheader("About This Project")
     st.markdown("Master's Thesis, Colorado State University, 2025")
