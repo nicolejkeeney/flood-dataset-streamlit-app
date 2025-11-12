@@ -243,6 +243,7 @@ st.markdown(
 st.markdown(
     "Click through the tabs to find more information about the project and explore flood impacts and characteristics by region, time, and variable."
 )
+st.markdown("Please allow 10-15 seconds for initial data loading.")
 
 # Helper mappings
 var_map = {
