@@ -220,10 +220,12 @@ st.markdown(
         .stTabs [data-baseweb="tab-list"] {
             flex-wrap: wrap;
             overflow-x: visible;
+            width: 100%;
+            justify-content: flex-start;
         }
         .stTabs [data-baseweb="tab-list"] button {
-            flex: 0 1 auto;
-            min-width: 45%;
+            flex: 0 0 calc(50% - 2px);
+            max-width: calc(50% - 2px);
             font-size: 1rem;
             padding: 12px 16px;
         }
