@@ -183,6 +183,8 @@ st.markdown(
         background-color: #e0e0e0 !important;
         width: 100%;
         display: flex;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     .stTabs [data-baseweb="tab-list"] button {
@@ -194,6 +196,8 @@ st.markdown(
         border: none;
         border-bottom: 3px solid transparent;
         flex: 1;
+        min-width: fit-content;
+        white-space: nowrap;
         opacity: 1 !important;
     }
 
@@ -209,6 +213,13 @@ st.markdown(
 
     .stTabs [data-baseweb="tab-border"] {
         display: none;
+    }
+
+    /* Mobile-specific: make tabs scrollable on small screens */
+    @media (max-width: 768px) {
+        .stTabs [data-baseweb="tab-list"] button {
+            flex: 0 0 auto;
+        }
     }
     </style>
 """,
