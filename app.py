@@ -180,7 +180,7 @@ st.markdown(
     /* Tabs - Full width tab style */
     .stTabs [data-baseweb="tab-list"] {
         gap: 0px;
-        background-color: transparent;
+        background-color: #e0e0e0 !important;
         width: 100%;
         display: flex;
     }
@@ -188,21 +188,23 @@ st.markdown(
     .stTabs [data-baseweb="tab-list"] button {
         font-size: 1.2rem;
         font-weight: 600;
-        background-color: #f0f2f6;
+        background-color: #d3d3d3 !important;
         border-radius: 0px;
         padding: 16px 24px;
         border: none;
         border-bottom: 3px solid transparent;
         flex: 1;
+        opacity: 1 !important;
     }
 
     .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {
-        background-color: white;
+        background-color: white !important;
         border-bottom: 3px solid #003D5C;
+        opacity: 1 !important;
     }
 
     .stTabs [data-baseweb="tab-list"] button:hover {
-        background-color: #e8eaed;
+        background-color: #c0c0c0 !important;
     }
 
     .stTabs [data-baseweb="tab-border"] {
@@ -623,7 +625,7 @@ with tab4:
 
     st.markdown("### Summary")
     st.markdown(
-        "This project involved a lengthy data processing pipeline with the end goal of creating a  global dataset of inland floods from 2000–2024 at the scale of subnational regions and months. Data processing involved substantial data preparation—cleaning, infilling missing values, and standardization—as well as regridding, reprojecting, merging, and slicing-and-dicing of several datasets of different flavors to arrive at the end product. All data wrangling was performed in Python and include simple tabular data cleaning and standarization, satellite data processing using Google Earth Engine's python API, and more computationally heavy geospatial processing run on Colorado State's trusty high-performance computing cluster, Cashew."
+        "This project involved a lengthy data processing pipeline with the end goal of creating a  global dataset of inland floods from 2000–2024 at the scale of subnational regions and months. Data processing involved substantial data preparation—cleaning, infilling missing values, and standardization—as well as regridding, reprojecting, merging, and slicing-and-dicing of several datasets of different flavors to arrive at the end product. All data wrangling was performed in Python and included simple tabular data cleaning and standarization, satellite data processing using Google Earth Engine's python API, and more computationally heavy geospatial processing run on Colorado State's trusty high-performance computing cluster, Cashew."
     )
     st.markdown("")
     st.markdown(
@@ -639,11 +641,11 @@ with tab4:
     st.markdown("### Data Sources Overview")
     st.markdown(
         """
-    1. **EM-DAT disaster records**: International disaster database providing flood event records and reported impacts
-    2. **MODIS surface reflectance**: Satellite imagery (Terra/Aqua) for flood detection via Google Earth Engine Python API 
-    3. **MSWEP precipitation**: Bias-corrected product that combines satellite retrievals and reanalysis precipitation data, as well as gauge observations for data pre-2020
-    4. **GPW v4**: Gridded Population of the World for population-weighting
-    5. **GAUL 2015**: Global Administrative Unit Layers (admin level 1 boundaries)
+    - **EM-DAT disaster records**: International disaster database providing flood event records and reported impacts
+    - **MODIS surface reflectance**: Satellite imagery (Terra/Aqua) for flood detection via Google Earth Engine Python API 
+    - **MSWEP precipitation**: Bias-corrected product that combines satellite retrievals and reanalysis precipitation data, as well as gauge observations for data pre-2020
+    - **GPW v4**: Gridded Population of the World for population-weighting
+    - **GAUL 2015**: Global Administrative Unit Layers (admin level 1 boundaries)
     """
     )
 
@@ -782,8 +784,8 @@ with tab5:
     )
 
     st.markdown("### Author")
-    st.markdown("#### Nicole Keeney")
     st.markdown(
+        "**Nicole Keeney**  \n"
         "[LinkedIn](https://www.linkedin.com/in/nicole-keeney/) | [GitHub](https://github.com/nicolejkeeney)  \n"
         "Research Software Engineer @ [Eagle Rock Analytics](https://eaglerockanalytics.com/)  \n"
         "MS, Civil & Environmental Engineering (2025) @ Colorado State University — [Davenport Research Group](https://fdavenport.github.io/)"
