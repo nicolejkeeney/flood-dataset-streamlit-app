@@ -6,6 +6,40 @@ Preprocess data for use in Streamlit app
 import geopandas as gpd
 import pandas as pd
 
+# Dictionary mapping problematic adm1_codes to correct countries per GAUL
+# These codes appear in multiple countries in the source data but should be assigned to one country
+COUNTRY_CORRECTIONS = {
+    2720: "Spain",
+    2961: "Timor-Leste",
+    25351: "Montenegro",
+    25355: "Montenegro",
+    25356: "Montenegro",
+    25365: "Montenegro",
+    25372: "Serbia",
+    25373: "Serbia",
+    25375: "Serbia",
+    25376: "Serbia",
+    25378: "Serbia",
+    25379: "Serbia",
+    25381: "Serbia",
+    25385: "Serbia",
+    25389: "Serbia",
+    25394: "Serbia",
+    25395: "Serbia",
+    40408: "Jammu and Kashmir",
+    40409: "Jammu and Kashmir",
+    40422: "Jammu and Kashmir",
+    40423: "Jammu and Kashmir",
+    40424: "Jammu and Kashmir",
+    40425: "Jammu and Kashmir",
+    40426: "Jammu and Kashmir",
+    40427: "Jammu and Kashmir",
+    40428: "Jammu and Kashmir",
+    40429: "Jammu and Kashmir",
+    40430: "Jammu and Kashmir",
+    40431: "Jammu and Kashmir",
+}
+
 # Input data
 INPUT_DATA_DIR = "./data/original/"
 GAUL_L1_FILEPATH = f"{INPUT_DATA_DIR}GAUL_2015/g2015_2014_1/"
@@ -88,9 +122,13 @@ def main():
     # Drop all rows with missing time info
     flood_df_subset = flood_df_subset.dropna(subset=["mon-yr"])
 
-    # Multiply damages by 1000 to go from $ in thousands to just $
-    # Improves display on streamlit
-    flood_df_subset["damages"] = flood_df_subset["damages"] * 1000
+    # Correct country assignments for problematic admin1 codes
+    print("Correcting country assignments for problematic admin1 codes...")
+    for code, correct_country in COUNTRY_CORRECTIONS.items():
+        mask = flood_df_subset["adm1_code"] == code
+        if mask.any():
+            flood_df_subset.loc[mask, "Country"] = correct_country
+    print(f"✓ Corrected {len(COUNTRY_CORRECTIONS)} admin1 codes")
 
     # Rename columns for better readibility in app
     flood_df_subset.rename(
@@ -107,6 +145,10 @@ def main():
         },
         inplace=True,
     )
+
+    # Multiply damages by 1000 to go from $ in thousands to just $
+    # Improves display on streamlit
+    flood_df_subset["damages"] = flood_df_subset["damages"] * 1000
 
     # Add year column
     flood_df_subset["year"] = flood_df_subset["mon-yr"].str[-4:].astype(int)
@@ -179,7 +221,7 @@ def main():
     # Add region name and country name for display
     admin1_names = flood_df_subset[
         ["adm1_code", "Admin1 (States/Provinces)", "Country"]
-    ].drop_duplicates()
+    ].drop_duplicates(subset=["adm1_code"])
     admin1_agg = admin1_agg.merge(admin1_names, on="adm1_code", how="left")
 
     # Replace None or "Administrative region not available" with "Unknown Name (code: [code])"

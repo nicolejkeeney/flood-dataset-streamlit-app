@@ -146,7 +146,7 @@ def generate_title(variable, agg_metric, normalize):
 
 
 # Set title
-st.set_page_config(page_title="Global Flood Analysis", layout="wide")
+st.set_page_config(page_title="Global Flood Analysis Dashboard", layout="wide")
 
 
 # Read in data - will load appropriate file based on region selection
@@ -215,6 +215,12 @@ st.markdown(
 
 # Main content
 st.title(f"Global Flood Analysis Dashboard")
+st.markdown(
+    "Explore a spatially and temporally disaggregated 21st century flood impact dataset (2000-2024)."
+)
+st.markdown(
+    "Click through the tabs to see different figures and more details about the project."
+)
 
 # Helper mappings
 var_map = {
@@ -233,8 +239,8 @@ region_id_map = {
 }
 
 # Create tabs
-tab1, tab2, tab3, tab4 = st.tabs(
-    ["Map View", "Top Regions", "Annual Totals (Global)", "About"]
+tab1, tab2, tab3, tab4, tab5 = st.tabs(
+    ["Map View", "Top Regions", "Annual Totals (Global)", "Methods", "About"]
 )
 
 # ========== MAP TAB ==========
@@ -315,7 +321,7 @@ with tab1:
                 else:
                     name_col = "UN Subregion"
 
-                with st.spinner("Loading map (expect 10-15 second lag for Admin1)..."):
+                with st.spinner("Loading map (expect 10-15 second lag)..."):
                     # Load country boundaries
                     country_borders = gpd.read_parquet(COUNTRY_FILEPATH)
 
@@ -600,7 +606,7 @@ with tab3:
                     plot_bgcolor=PLOT_BG_COLOR,
                     paper_bgcolor=PLOT_BG_COLOR,
                     showlegend=False,
-                    title=get_plot_title_config(f"{ts_label} Over Time"),
+                    title=get_plot_title_config(ts_label),
                     coloraxis_showscale=False,
                 )
 
@@ -611,35 +617,129 @@ with tab3:
 
     timeseries_fragment()
 
-# ========== ABOUT TAB ==========
+# ========== METHODS TAB ==========
 with tab4:
-    st.subheader("About This Project")
-    st.markdown("Master's Thesis, Colorado State University, 2025")
+    st.markdown("## Methods")
 
-    st.markdown("### Data Sources")
+    st.markdown("### Summary")
+    st.markdown(
+        "This project involved a lengthy data processing pipeline with the end goal of creating a global panel dataset of inland floods from 2000–2024 at the scale of subnational regions and months. Data processing involved substantial data preparation—cleaning, infilling missing values, and standardization—as well as regridding, reprojecting, merging, and slicing-and-dicing of several datasets of different flavors to arrive at the end product. All data wrangling was performed in Python and include simple `pandas` computations, Google Earth Engine's python API, and more computationally heavy geospatial processing run on Colorado State's trusty high-performance cluster, Cashew."
+    )
+    st.markdown("")
+    st.markdown(
+        "Both the **data processing code** and the **code for this app** are publicly available on GitHub:"
+    )
     st.markdown(
         """
-    This application visualizes flood event data derived from multiple sources:
-    - **EM-DAT International Disaster Database**: Disaster impact metrics including economic damages, population affected, and event records
-    - **MODIS Surface Reflectance Imagery**: Satellite-derived flood extent and duration data
-    - **Other geospatial and demographic datasets**
+    - Data processing pipeline: [🐙 GitHub](https://github.com/nicolejkeeney/emdat-modis-flood-dataset)
+    - This Streamlit app: [🐙 GitHub](https://github.com/nicolejkeeney/flood-dataset-streamlit-app)
     """
+    )
+
+    st.markdown("### Data Sources Overview")
+    st.markdown(
+        """
+    1. **EM-DAT disaster records**: International disaster database providing flood event records and reported impacts
+    2. **MODIS surface reflectance**: Satellite imagery (Terra/Aqua) for flood detection via Google Earth Engine Python API 
+    3. **MSWEP precipitation**: Bias-corrected product that combines satellite retrievals and reanalysis precipitation data, as well as gauge observations for data pre-2020
+    4. **GPW v4**: Gridded Population of the World for population-weighting
+    5. **GAUL 2015**: Global Administrative Unit Layers (admin level 1 boundaries)
+    """
+    )
+
+    st.markdown("### Detailed Methods")
+    st.markdown("#### 1. Preprocess EM-DAT flood event catalog for geospatial analysis")
+    st.markdown(
+        """
+    We analyze inland flood events from the EM-DAT disaster database, a standardized, international hazard dataset that includes event information for floods and other natural and anthropogenic hazards (Delforge et al., 2025). For an event to be included in the EM-DAT database, it must meet one of the following three criteria: ten or more deaths (including dead and missing), 100 or more people affected, and any call for international assistance or an emergency declaration. The dataset is provided in tabular format and includes numerous variables such as economic damages, the number of people affected, location information, and other relevant details for each hazard event. For our analysis, we subset the EM-DAT database to include all inland floods from 2000-2024. This subset consists of 4073 total events, of which 49.3% are classified as riverine floods, 17.3% as flash floods, and 33.4% as general floods. We focus on inland floods rather than coastal floods because the environmental drivers of the latter are more often oceanic (i.e. coastal surge) rather than atmospheric (i.e. precipitation).
+
+    We consider two impact variables from the EM-DAT records: total damages in U.S. dollars adjusted for inflation and total number of affected people. In EM-DAT, total damages for events up until 2023 have already been adjusted to 2023 U.S dollar equivalent. We use the same adjustment procedure as EM-DAT to calculate 2023 equivalent damages for all events in 2024 based on the Organization for Economic Cooperation and Development (OECD) Consumer Price Index (Organisation for Economic Co-operation and Development, n.d.). Total affected people is defined as the combined number of people injured, made homeless, or otherwise impacted by the event. Notably, this number does not include fatalities, which are recorded in a separate field and excluded from our population-weighted impact estimates due to their comparatively low magnitude relative to the total number people affected.
+
+    Given the nature of a human-compiled database and the complex realities of characterizing flood and impact data, the EM-DAT database has missing or incomplete data. We aim to maximize the total number of events in our analysis by infilling missing values for event dates and location when appropriate. If the flood start day is missing, we infill that value with the first day of the month (we apply this step for 278 events; 6.8% of total). Similarly, if the end date is missing, we infill that value with the last day of the month (applied for 268 events; 6.6% of total). If a flood is missing a start/end month or year, it is deemed too subjective for manual infilling and is dropped from our subset.
+
+    We also address missing spatial information. EM-DAT provides location data through four fields: "Country," "River Basin," "Location" (narrative descriptions of affected places), and "Admin Units" (structured administrative codes and names). The "Admin Units" field maps directly to the 2015 Global Administrative Unit Layers (GAUL) dataset, which defines polygon boundaries for administrative regions worldwide at level 1 (states/provinces) and level 2 (counties/districts/municipalities) (Food and Agriculture Organization of the United Nations, 2015). While some event records contain level 2 location information (county/district/municipality level), many events only contain level 1 information. For this reason, we focus our analysis at the admin 1 (state/province) level. For most events, we use the "Admin Units" field to directly match flood events to affected level 1 regions, but 290 events (7.1% of total) lack this information. We manually infilled missing entries using the "Location" string (275 events) or news reports (15 events) when location strings were also absent. This infilling was particularly necessary for recent years, as many 2022-2023 events and all 2024 events lacked data in the "Admin Units" field. Some administrative regions underwent renaming or rezoning after 2015, when administrative regions in the GAUL dataset are defined. To address this, post-2015 flood events in renamed or rezoned regions were remapped to their 2015-equivalent boundaries for consistency. The infilled flood event catalog includes 4073 inland flood events across 2375 unique admin1 regions across 177 countries. A substantial subset of events in EM-DAT also contain empty fields for one or more flood impact variables. Missing flood impact information is addressed in a later step when we apply the panel regression analysis.
+
+    Following initial data infilling steps, flood events are disaggregated into separate months and admin 1 regions using the location and date information. The goal of the disaggregation step is to produce a dataset with a consistent spatial (admin 1) and temporal (monthly) resolution, which is a requirement of fixed-effect panel regression methods. Disaggregated events are referred to hereafter as admin1-month events. During the event disaggregation process, each unique admin code is extracted from the "Admin Units" field, and second-level administrative regions are mapped to their corresponding first-level region using the GAUL database. Events are disaggregated so that each admin1-month event corresponds to a single month and a single administrative 1 region. For events that span multiple months, the start and end dates for each admin1-month event is adjusted to the portion of the event that falls within that month. For example, an event occurring within a single administrative 1 region with a start date of May 27 and an end date of June 2 would be split into two admin1-month events: the first spanning May 27-31 and the other spanning June 1-2. Similarly, events covering multiple regions are split so that each admin1-month event represents only one administrative 1 region. Each admin1-month event is then assigned a unique ID linking it to the corresponding month, administrative 1 code, and original event ID, as shown in the schematic below.
+    """
+    )
+
+    st.image(
+        "data/figs/event_disag_process_schematic.png",
+        caption="Event disaggregation process",
+    )
+
+    st.markdown(
+        "#### 2. Compute satellite-derived flood maps and flood-exposed population"
+    )
+    st.markdown(
+        """
+    Satellite imagery allows us to provide additional fine-scale flood information that is not available in human-reported event records. For each admin1-month event, we use MODIS satellite imagery to generate a high-resolution map of flooded pixels using a modified version of the inundated flood detection algorithm outlined in Tellman et al. (2021) and further detailed in their open source code repository (CloudToStreet, 2021). Here, we provide a summary of the algorithm, outline our modifications, and discuss its limitations. For more comprehensive details about the algorithm, we refer the reader to the Tellman manuscript.
+
+    In brief, the algorithm works as follows. First, Google Earth Engine's (GEE) Python API  is used for retrieving surface reflectance imagery from NASA's MODIS sensors aboard the Terra (entire study duration) and Aqua (after July 2002) satellites. The water detection algorithm then utilizes the short-wave-infrared, near-infrared, and red bands from the surface reflectance data, along with fixed, empirically-derived threshold values, to classify each pixel as either water (1) or non-water (0). The water detection algorithm is applied across all 250m MODIS pixels within the flood event geometry, defined as the bounding box of the GAUL polygon of the corresponding admin 1 region. Dates covering the full admin1-month event duration plus a one-day buffer before and after the event are retrieved. This means that the number of days used in the detection algorithm is as short as 3 days for an event with a single day duration, or as long as 33 days for an event with 31-day (full month) duration, with the buffer days on either side. Detection never exceeds 33 days because admin1-month events are, by definition, limited to a maximum of one month.
+
+    Our modified multi-day composite method uses a 3-day window centered on the retrieval date of the image. With two satellite overpasses per day, each single-day composite incorporates up to six observations. A pixel is classified as water if at least three of the six observations indicate water presence. Tellman et al. (2021) found that using a multiday composite reduced the rate of false positives. The algorithm then applies a terrain slope mask and permanent water mask to distinguish floodwater from permanent surface water and to further reduce false positives due to terrain or cloud shadows. The final flood map for a given admin1-month event combines all daily composites from the event into a single image, where a pixel is classified as inundated if it was identified as inundated on any day during the event.
+
+    Population density data are sourced from NASA's Gridded Population of the World (GPW) dataset, which provides global estimates of population density at 1km resolution in 5-year intervals (Center For International Earth Science Information Network-CIESIN-Columbia University, 2018). We reproject this population density dataset to the finer spatial grid and projection (250m, EPSG:4326) of the satellite-derived flood maps using a bilinear reprojection method so the two datasets can be used together. Grid cell areas are then calculated with the Python package "xemsf" (Zhuang et al., 2025), and population counts are derived by multiplying population density by cell area. Finally, for each admin1-month event, we compute the total population within the flood zone by masking the population raster with the corresponding flood map and summing the population count of the flooded cells. For each admin1-month event, the population density raster corresponding to the closest preceding GPW release year is used—e.g., events occurring in 2003 use population data from the year 2000.
+    """
+    )
+
+    st.markdown(
+        "#### 3. Allocate EM-DAT flood impacts across disaggregated admin1-month flood events"
+    )
+    st.markdown(
+        """
+    To compare flood impacts on a consistent admin1-month scale, we distribute the impacts of floods that span multiple administrative regions and/or months across the corresponding admin1-month events. For most floods, we are able to compute population-weighted impacts to better capture the uneven distribution of impacts across different months and administrative regions. This process relies on three data sources: the satellite-derived flood maps for each admin1-month event, gridded global population density estimates, and the EM-DAT impact data.
+
+    Three approaches are used to allocate impacts across admin1-month events for each flood, depending on the results of the satellite-derived flood maps:
+
+    - **Case 1**: All admin1-month events have non-zero flood maps (i.e. flooded pixels were detected in every admin 1 region in every month). Population-weighted impacts are calculated by multiplying each event's fractional flooded population by the impact variables from that flood (approach #1). More specifically, fractional population is defined as the satellite-derived flooded population for that admin1-month event divided by the total satellite-derived flooded population across all admin1-month events for the flood.
+
+    - **Case 2**: All events have either zero detected flooded pixels or the flood maps are unable to be generated due to internal GEE errors. In this case, the impact variables are divided equally across all admin1-month events (approach #2).
+
+    - **Case 3**: Some admin1-month events have flooded pixels while others do not. Here, a hybrid approach is used in order to maintain information from the non-zero flood maps (approach #3). In this hybrid method, a small baseline fraction (5%) of the total impact is allocated equally among all events with zero flooded pixels (following approach #2), while the remaining 95% is distributed among events with detected flooding, weighted by their flooded population (following approach #1).
+
+    Altogether, for 55% of floods we allocate impacts to admin1-events using approach #1, for 19% of events using approach #2, and 26% of events using approach #3.
+
+    To account for differences in economic conditions, population density, and geographic area across admin1 regions and years, we normalize flood impacts to enable comparisons across regions. GDP-standardized economic damages are calculated as the damages divided by the admin1 region's yearly GDP, expressed as a percentage. The computation utilizes the mean GDP per capita for each year and admin1 region, which we extract from the global gridded yearly GDP per capita dataset at 5 arc-minute resolution from Kummu et al. (2025). Because the Kummu dataset is only available through 2022, we use the 2022 GDP values for events in 2023 and 2024. Similarly, the total people affected are expressed as a percentage of the total admin1 population (using GPW-derived population count), and total flooded area is expressed as a percentage of the total area of the admin1 region (using GAUL-derived areas).
+    """
+    )
+
+    st.markdown(
+        "#### 4. Extract monthly precipitation standardized anomalies at admin1-month level"
+    )
+    st.markdown(
+        """
+Historical precipitation data enable us to add a climatological dimension to our flood dataset. For each admin1 region, we calculate the area-averaged daily mean and 75th percentile precipitation using the open-source Python package "exact_extract" (Baston, 2025). These calculations use daily 0.1° resolution data from GloH2O's Multi-Source Weighted-Ensemble Precipitation (MSWEP) dataset for 2000–2024 (Beck et al., 2019), a bias-corrected product that combines satellite retrievals and reanalysis precipitation data, as well as gauge observations for data pre-2020. For each of the precipitation variables, we compute the mean and standard deviation within each admin1 region across the 2000-2024 time period, and use these values to transform each monthly value into a standardized anomaly.
+"""
+    )
+
+    st.markdown("#### References")
+    st.markdown(
+        """           
+        
+        
+    """
+    )
+
+# ========== ABOUT TAB ==========
+with tab5:
+    st.markdown("## About This Project")
+
+    st.markdown("### Summary")
+    st.markdown(
+        "This app is a visual representation of a master's project in the Department of Civil & Environmental Engineering at Colorado State University (2025), titled:\n"
+        '"A Spatially and Temporally Disaggregated Twenty-First Century Global Flood Record for Flood Impact Analysis."'
     )
 
     st.markdown("### Author")
     st.markdown(
-        """
-        <div style="margin-top: 10px;">
-            <div>Nicole Keeney</div>
-            <div style="margin-top: 10px;">
-                <a href="https://linkedin.com/in/nicole-keeney" target="_blank" style="text-decoration: none; margin-right: 10px;">
-                    <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" width="20" height="20" style="vertical-align: middle;">
-                </a>
-                <a href="https://github.com/nicolejkeeney" target="_blank" style="text-decoration: none;">
-                    <img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" width="20" height="20" style="vertical-align: middle;">
-                </a>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+        "**Nicole Keeney**  \n"
+        "[LinkedIn](https://www.linkedin.com/in/nicole-keeney/) | [GitHub](https://github.com/nicolejkeeney)  \n"
+        "Research Software Engineer @ [Eagle Rock Analytics](https://eaglerockanalytics.com/)  \n"
+        "MS, Civil & Environmental Engineering (2025) @ Colorado State University — [Davenport Research Group](https://fdavenport.github.io/)"
+    )
+
+    st.markdown("### Abstract")
+    st.markdown(
+        "Given that floods are one of the most widespread and costly disasters, there is significant attention on understanding the hydrologic and socioeconomic drivers of these events. However, current research efforts are limited by a lack of detailed, comprehensive, and global-scale data on historical flood events and impacts. In this study, we combine flood damage records with climate reanalysis data and satellite-based flood detection to create a spatially and temporally disaggregated 21st century flood dataset. We start with 4073 inland floods from 2000-2024 contained in the EM-DAT international hazard database. We then disaggregate each event into sub-national administrative levels (e.g., states or provinces) and, for longer duration events, by calendar month to enable analysis at finer spatial and temporal scales. For each event, we derive flooded pixel maps from MODIS satellite imagery. By combining these high-resolution flood maps with gridded population density data, we calculate the number of people exposed to flooded areas in each state or province over time. Lastly, we use climate reanalysis data to extract historical precipitation data at the administrative region and month level in order to characterize the meteorological conditions of each flood. The result is a spatially and temporally consistent dataset of global flood characteristics and impacts to enable more granular impact analysis. In our exploratory analyses, we use the dataset to investigate how historical precipitation contributes to observed flood impacts—both in terms of people affected and economic damages—across different regions and through time. We find a statistically significant relationship between monthly extreme precipitation and flood impacts using a global-scale fixed-effects panel regression model. In future work, this model could serve as the basis for attributing flood impacts to underlying changes in the precipitation distribution."
     )
