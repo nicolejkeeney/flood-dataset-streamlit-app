@@ -215,6 +215,14 @@ st.markdown(
         display: none;
     }
 
+    /* Default: show desktop content, hide mobile message */
+    .desktop-only {
+        display: block;
+    }
+    .mobile-only {
+        display: none;
+    }
+
     /* Mobile-specific: wrap tabs to multiple rows on small screens */
     @media (max-width: 768px) {
         .stTabs [data-baseweb="tab-list"] {
@@ -228,6 +236,23 @@ st.markdown(
             max-width: calc(50% - 2px);
             font-size: 1rem;
             padding: 12px 16px;
+        }
+        /* Hide desktop map, show mobile message */
+        .desktop-only {
+            display: none !important;
+        }
+        .mobile-only {
+            display: block !important;
+        }
+    }
+
+    /* Desktop: hide mobile message, show map */
+    @media (min-width: 769px) {
+        .desktop-only {
+            display: block !important;
+        }
+        .mobile-only {
+            display: none !important;
         }
     }
     </style>
@@ -243,7 +268,6 @@ st.markdown(
 st.markdown(
     "Click through the tabs to find more information about the project and explore flood impacts and characteristics by region, time, and variable."
 )
-st.markdown("Please allow 10-15 seconds for initial data loading.")
 
 # Helper mappings
 var_map = {
@@ -263,11 +287,25 @@ region_id_map = {
 
 # Create tabs
 tab1, tab2, tab3, tab4, tab5 = st.tabs(
-    ["Map View", "Top Regions", "Global Annual Trends", "Methods", "About"]
+    ["Global Annual Trends", "Map View", "Top Regions", "Methods", "About"]
 )
 
-# ========== MAP TAB ==========
-with tab1:
+# ========== MAP VIEW TAB ==========
+with tab2:
+    # Mobile message
+    st.markdown(
+        """
+        <div class="mobile-only">
+            <div style="padding: 1rem; background-color: #d1ecf1; border: 1px solid #bee5eb; border-radius: 0.25rem; color: #0c5460;">
+                <strong>Interactive maps are not available on mobile devices.</strong> Please view this page on a desktop or laptop computer for the full map experience.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Desktop map content
+    st.markdown('<div class="desktop-only">', unsafe_allow_html=True)
 
     @st.fragment
     def map_fragment():
@@ -309,7 +347,7 @@ with tab1:
                 region = st.selectbox(
                     "Geographic Level",
                     ["Admin1 (States/Provinces)", "Country", "UN Subregion"],
-                    index=0,
+                    index=1,
                     key="map_region",
                 )
 
@@ -405,8 +443,10 @@ with tab1:
 
     map_fragment()
 
-# ========== BAR CHART TAB ==========
-with tab2:
+    st.markdown("</div>", unsafe_allow_html=True)  # Close desktop-only div
+
+# ========== TOP REGIONS TAB ==========
+with tab3:
 
     @st.fragment
     def bar_fragment():
@@ -568,8 +608,8 @@ with tab2:
 
     bar_fragment()
 
-# ========== TIMESERIES TAB ==========
-with tab3:
+# ========== GLOBAL ANNUAL TRENDS TAB ==========
+with tab1:
 
     @st.fragment
     def timeseries_fragment():
