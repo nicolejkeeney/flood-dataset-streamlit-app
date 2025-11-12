@@ -215,10 +215,17 @@ st.markdown(
         display: none;
     }
 
-    /* Mobile-specific: make tabs scrollable on small screens */
+    /* Mobile-specific: wrap tabs to multiple rows on small screens */
     @media (max-width: 768px) {
+        .stTabs [data-baseweb="tab-list"] {
+            flex-wrap: wrap;
+            overflow-x: visible;
+        }
         .stTabs [data-baseweb="tab-list"] button {
-            flex: 0 0 auto;
+            flex: 0 1 auto;
+            min-width: 45%;
+            font-size: 1rem;
+            padding: 12px 16px;
         }
     }
     </style>
@@ -253,7 +260,7 @@ region_id_map = {
 
 # Create tabs
 tab1, tab2, tab3, tab4, tab5 = st.tabs(
-    ["Map View", "Top Regions", "Annual Trends", "Methods", "About"]
+    ["Map View", "Top Regions", "Global Annual Trends", "Methods", "About"]
 )
 
 # ========== MAP TAB ==========
