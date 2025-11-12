@@ -117,7 +117,7 @@ COLOR_PALETTES = {
 def get_plot_title_config(title_text):
     """Create standardized title configuration for plots"""
     return dict(
-        text=title_text, x=0.5, xanchor="center", font=dict(size=20, color=HEADER_COLOR)
+        text=title_text, x=0.5, xanchor="center", font=dict(size=26, color=HEADER_COLOR)
     )
 
 
@@ -198,7 +198,7 @@ st.markdown(
 
     .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {
         background-color: white;
-        border-bottom: 3px solid;
+        border-bottom: 3px solid #003D5C;
     }
 
     .stTabs [data-baseweb="tab-list"] button:hover {
@@ -219,7 +219,7 @@ st.markdown(
     "Explore a spatially and temporally disaggregated 21st century flood impact dataset (2000-2024)."
 )
 st.markdown(
-    "Click through the tabs to see different figures and more details about the project."
+    "Click through the tabs to find more information about the project and explore flood impacts and characteristics by region, time, and variable."
 )
 
 # Helper mappings
@@ -623,7 +623,7 @@ with tab4:
 
     st.markdown("### Summary")
     st.markdown(
-        "This project involved a lengthy data processing pipeline with the end goal of creating a global panel dataset of inland floods from 2000–2024 at the scale of subnational regions and months. Data processing involved substantial data preparation—cleaning, infilling missing values, and standardization—as well as regridding, reprojecting, merging, and slicing-and-dicing of several datasets of different flavors to arrive at the end product. All data wrangling was performed in Python and include simple `pandas` computations, Google Earth Engine's python API, and more computationally heavy geospatial processing run on Colorado State's trusty high-performance cluster, Cashew."
+        "This project involved a lengthy data processing pipeline with the end goal of creating a  global dataset of inland floods from 2000–2024 at the scale of subnational regions and months. Data processing involved substantial data preparation—cleaning, infilling missing values, and standardization—as well as regridding, reprojecting, merging, and slicing-and-dicing of several datasets of different flavors to arrive at the end product. All data wrangling was performed in Python and include simple tabular data cleaning and standarization, satellite data processing using Google Earth Engine's python API, and more computationally heavy geospatial processing run on Colorado State's trusty high-performance computing cluster, Cashew."
     )
     st.markdown("")
     st.markdown(
@@ -631,8 +631,8 @@ with tab4:
     )
     st.markdown(
         """
-    - Data processing pipeline: [🐙 GitHub](https://github.com/nicolejkeeney/emdat-modis-flood-dataset)
-    - This Streamlit app: [🐙 GitHub](https://github.com/nicolejkeeney/flood-dataset-streamlit-app)
+    - Data processing pipeline: [nicolejkeeney/emdat-modis-flood-dataset](https://github.com/nicolejkeeney/emdat-modis-flood-dataset)
+    - This Streamlit app: [nicolejkeeney/flood-dataset-streamlit-app](https://github.com/nicolejkeeney/flood-dataset-streamlit-app)
     """
     )
 
@@ -647,7 +647,7 @@ with tab4:
     """
     )
 
-    st.markdown("### Detailed Methods")
+    st.markdown("### Data Processing Pipeline")
     st.markdown("#### 1. Preprocess EM-DAT flood event catalog for geospatial analysis")
     st.markdown(
         """
@@ -663,10 +663,14 @@ with tab4:
     """
     )
 
-    st.image(
-        "data/figs/event_disag_process_schematic.png",
-        caption="Event disaggregation process",
-    )
+    # Hacky solution to get high res, centered image on the page
+    col1, col2, col3 = st.columns([1, 3, 1])
+    with col2:
+        st.image(
+            "data/figs/event_disag_process_schematic.png",
+            caption="Event disaggregation process",
+            use_container_width=True,
+        )
 
     st.markdown(
         "#### 2. Compute satellite-derived flood maps and flood-exposed population"
@@ -709,15 +713,61 @@ with tab4:
     )
     st.markdown(
         """
-Historical precipitation data enable us to add a climatological dimension to our flood dataset. For each admin1 region, we calculate the area-averaged daily mean and 75th percentile precipitation using the open-source Python package "exact_extract" (Baston, 2025). These calculations use daily 0.1° resolution data from GloH2O's Multi-Source Weighted-Ensemble Precipitation (MSWEP) dataset for 2000–2024 (Beck et al., 2019), a bias-corrected product that combines satellite retrievals and reanalysis precipitation data, as well as gauge observations for data pre-2020. For each of the precipitation variables, we compute the mean and standard deviation within each admin1 region across the 2000-2024 time period, and use these values to transform each monthly value into a standardized anomaly.
-"""
+    Historical precipitation data enable us to add a climatological dimension to our flood dataset. For each admin1 region, we calculate the area-averaged daily mean and 75th percentile precipitation using the open-source Python package "exact_extract" (Baston, 2025). These calculations use daily 0.1° resolution data from GloH2O's Multi-Source Weighted-Ensemble Precipitation (MSWEP) dataset for 2000–2024 (Beck et al., 2019), a bias-corrected product that combines satellite retrievals and reanalysis precipitation data, as well as gauge observations for data pre-2020. For each of the precipitation variables, we compute the mean and standard deviation within each admin1 region across the 2000-2024 time period, and use these values to transform each monthly value into a standardized anomaly.
+    """
     )
 
-    st.markdown("#### References")
     st.markdown(
-        """           
-        
-        
+        "#### 5. Validation of satellite flood map detection and event disaggregation results"
+    )
+    st.markdown(
+        """
+    We compare our satellite-derived flooded population estimates to the total number of people affected during each event as reported in EM-DAT. This comparison allows us to evaluate how well satellite-based flooded population estimates reproduce reported flood impacts. The satellite-derived flooded population estimates (aggregated across all admin1-month events per flood) are positively correlated with the total number of people affected per flood as reported by EM-DAT (R² = 0.20, slope = 0.35, p < 0.001), indicating a statistically significant relationship between independent satellite-based exposure metrics and reported disaster impacts. The satellite-derived flooded population estimates are consistently lower than the EM-DAT total affected population, likely due to the following two factors. First, flood impacts extend far beyond the flood zone. People not directly located in inundated areas can still be impacted by floods due to destruction of key infrastructure like bridges, roads, or hospitals, or impeded access to food, water, or medicine. Second, the water detection algorithm likely underestimates the true extent of flooding, especially during short-duration flooding (as detailed below), which would correspondingly reduce the satellite-derived flooded population estimates.
+    """
+    )
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.image(
+            "data/figs/emdat_modis_regression.png",
+            caption="Regression line on a log scale illustrating the relationship between the total number of people affected per flood and satellite-derived flooded population estimates. For each flood, flooded pixel estimates were generated for individual admin1-month events and then summed to provide a total value at the same flood-level scale of the EM-DAT reported impacts.",
+            use_container_width=True,
+        )
+    st.markdown(
+        """
+    There are several limitations to the water detection algorithm that can result in misclassifications of pixels. Tellman et al. (2021) found that the water detection algorithm frequently underdetected flooded pixels for a number of reasons, including extreme cloud cover during the event, incorrect start and end dates reported in the event catalogue that don't actually encompass the full flood period, and challenges in detecting short-duration floods (such as flash floods) and urban flooding where flooded streets or channels may be much smaller than the MODIS 250m resolution. Using our modified water detection algorithm, 24% of the admin1-month events produce flood maps with no detected floodwater. Events with zero flooded pixels detected are predominantly short in duration, with a median of only 5 days (versus 13 days for events with detected flooded pixel maps), confirming the algorithm's limitations with detecting floodwaters for short duration events. Given these limitations, we anticipate that the flooded pixel counts for each event represent conservative estimates of the true flooded extent.
+    """
+    )
+
+    col1, col2, col3 = st.columns([3, 4, 3])
+    with col2:
+        st.image(
+            "data/figs/event_duration_flooded_pixels_violinplot.png",
+            caption="Comparison of event duration for floods with and without successful flooded pixel detection, showing that events without detectable flooding are predominantly shorter in duration (note that, by definition, the maximum monthly flood duration is 30 or 31 days).",
+            use_container_width=True,
+        )
+
+    st.markdown("### References")
+    st.markdown(
+        """
+    Baston, D. (2025). exactextract. Retrieved from https://github.com/isciences/exactextract/releases/tag/v0.2.2
+
+    Beck, H. E., Wood, E. F., Pan, M., Fisher, C. K., Miralles, D. G., Dijk, A. I. J. M. van, et al. (2019). MSWEP V2 Global 3-Hourly 0.1° Precipitation: Methodology and Quantitative Assessment. *Bulletin of the American Meteorological Society*, *100*(3), 473–500. https://doi.org/10.1175/BAMS-D-17-0138.1
+
+    Center For International Earth Science Information Network-CIESIN-Columbia University. (2018). Gridded Population of the World, Version 4 (GPWv4): Population Count, Revision 11 (Version 4.11) [Data set]. Palisades, NY: NASA Socioeconomic Data and Applications Center (SEDAC). https://doi.org/10.7927/H4JW8BX5
+
+    CloudToStreet. (2021). cloudtostreet/MODIS Global Flood Database (v1.0.0). Retrieved from https://github.com/cloudtostreet/MODIS_GlobalFloodDatabase/releases/tag/v1.0.0
+
+    Delforge, D., Wathelet, V., Below, R., Sofia, C. L., Tonnelier, M., Van Loenhout, J. A. F., & Speybroeck, N. (2025). EM-DAT: the Emergency Events Database. *International Journal of Disaster Risk Reduction*, *124*, 105509. https://doi.org/10.1016/j.ijdrr.2025.105509
+
+    Food and Agriculture Organization of the United Nations. (2015). Global Administrative Unit Layers (GAUL) 2015 [Data set]. FAO. Retrieved from https://data.apps.fao.org/catalog/dataset/global-administrative-unit-layers-gaul-2015
+
+    Kummu, M., Kosonen, M., & Masoumzadeh Sayyar, S. (2025). Downscaled gridded global dataset for gross domestic product (GDP) per capita PPP over 1990–2022. *Scientific Data*, *12*(1), 178. https://doi.org/10.1038/s41597-025-04487-x
+
+    Organisation for Economic Co-operation and Development. (n.d.). Inflation (CPI) [Data set]. OECD. Retrieved from https://www.oecd.org/en/data/indicators/inflation-cpi.html
+
+    Tellman, B., Sullivan, J. A., Kuhn, C., Kettner, A. J., Doyle, C. S., Brakenridge, G. R., et al. (2021). Satellite imaging reveals increased proportion of population exposed to floods. *Nature*, *596*(7870), 80–86. https://doi.org/10.1038/s41586-021-03695-w
+
+    Zhuang, J., Dussin, R., Huard, D., Bourgault, P., & Anderson Banihirwe. (2025, April 29). pangeo-data/xESMF: v0.8.10 (Version v0.8.10). Zenodo. https://doi.org/10.5281/ZENODO.4294774
     """
     )
 
@@ -732,8 +782,8 @@ with tab5:
     )
 
     st.markdown("### Author")
+    st.markdown("#### Nicole Keeney")
     st.markdown(
-        "**Nicole Keeney**  \n"
         "[LinkedIn](https://www.linkedin.com/in/nicole-keeney/) | [GitHub](https://github.com/nicolejkeeney)  \n"
         "Research Software Engineer @ [Eagle Rock Analytics](https://eaglerockanalytics.com/)  \n"
         "MS, Civil & Environmental Engineering (2025) @ Colorado State University — [Davenport Research Group](https://fdavenport.github.io/)"
