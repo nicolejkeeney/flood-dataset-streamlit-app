@@ -215,14 +215,6 @@ st.markdown(
         display: none;
     }
 
-    /* Default: show desktop content, hide mobile message */
-    .desktop-only {
-        display: block;
-    }
-    .mobile-only {
-        display: none;
-    }
-
     /* Mobile-specific: wrap tabs to multiple rows on small screens */
     @media (max-width: 768px) {
         .stTabs [data-baseweb="tab-list"] {
@@ -237,22 +229,12 @@ st.markdown(
             font-size: 1rem;
             padding: 12px 16px;
         }
-        /* Hide desktop map, show mobile message */
-        .desktop-only {
-            display: none !important;
+        /* Make Plotly charts responsive on mobile */
+        .js-plotly-plot {
+            width: 100% !important;
         }
-        .mobile-only {
-            display: block !important;
-        }
-    }
-
-    /* Desktop: hide mobile message, show map */
-    @media (min-width: 769px) {
-        .desktop-only {
-            display: block !important;
-        }
-        .mobile-only {
-            display: none !important;
+        .plotly {
+            width: 100% !important;
         }
     }
     </style>
@@ -292,20 +274,6 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs(
 
 # ========== MAP VIEW TAB ==========
 with tab2:
-    # Mobile message
-    st.markdown(
-        """
-        <div class="mobile-only">
-            <div style="padding: 1rem; background-color: #d1ecf1; border: 1px solid #bee5eb; border-radius: 0.25rem; color: #0c5460;">
-                <strong>Interactive maps are not available on mobile devices.</strong> Please view this page on a desktop or laptop computer for the full map experience.
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    # Desktop map content
-    st.markdown('<div class="desktop-only">', unsafe_allow_html=True)
 
     @st.fragment
     def map_fragment():
@@ -442,8 +410,6 @@ with tab2:
                     st.plotly_chart(fig, width="stretch")
 
     map_fragment()
-
-    st.markdown("</div>", unsafe_allow_html=True)  # Close desktop-only div
 
 # ========== TOP REGIONS TAB ==========
 with tab3:
