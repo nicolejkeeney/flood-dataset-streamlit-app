@@ -253,7 +253,7 @@ region_id_map = {
 
 # Create tabs
 tab1, tab2, tab3, tab4, tab5 = st.tabs(
-    ["Map View", "Top Regions", "Annual Totals (Global)", "Methods", "About"]
+    ["Map View", "Top Regions", "Annual Trends", "Methods", "About"]
 )
 
 # ========== MAP TAB ==========
