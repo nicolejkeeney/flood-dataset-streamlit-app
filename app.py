@@ -770,11 +770,11 @@ elif view == "About":
         '"A Spatially and Temporally Disaggregated Twenty-First Century Global Flood Record for Flood Impact Analysis."'
     )
 
+    # "Research Software Engineer @ [Eagle Rock Analytics](https://eaglerockanalytics.com/)  \n"
     st.markdown("### Author")
     st.markdown(
         "**Nicole Keeney**  \n"
         "[LinkedIn](https://www.linkedin.com/in/nicole-keeney/) | [GitHub](https://github.com/nicolejkeeney)  \n"
-        "Research Software Engineer @ [Eagle Rock Analytics](https://eaglerockanalytics.com/)  \n"
         "MS, Civil & Environmental Engineering (2025) @ Colorado State University — [Davenport Research Group](https://fdavenport.github.io/)"
     )
 
