@@ -246,8 +246,6 @@ view = st.selectbox(
     label_visibility="collapsed"
 )
 
-st.markdown("---")  # Divider
-
 # ========== MAP VIEW ==========
 if view == "Map View":
 
