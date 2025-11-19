@@ -23,6 +23,7 @@ HEADER_COLOR = "#003D5C"
 
 # Plot styling
 PLOT_HEIGHT = 600
+PLOT_HEIGHT_MOBILE = 400  # Shorter height for mobile devices
 PLOT_BG_COLOR = "white"
 WATER_COLOR = "#E6F7FF"
 GRID_COLOR = "lightgray"
@@ -226,6 +227,58 @@ st.markdown(
 
     /* Mobile-specific: wrap tabs to multiple rows on small screens */
     @media (max-width: 768px) {
+        /* Stack columns vertically on mobile */
+        [data-testid="column"] {
+            width: 100% !important;
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
+        }
+
+        /* Better spacing for mobile */
+        .stApp {
+            padding: 0.5rem !important;
+        }
+
+        /* Make title more readable */
+        h1 {
+            font-size: 1.5rem !important;
+            line-height: 1.3 !important;
+            margin-bottom: 0.5rem !important;
+        }
+
+        h2 {
+            font-size: 1.2rem !important;
+            margin-bottom: 0.5rem !important;
+        }
+
+        h3 {
+            font-size: 1.1rem !important;
+        }
+
+        /* Better paragraph spacing */
+        p {
+            font-size: 0.95rem !important;
+            line-height: 1.4 !important;
+            margin-bottom: 0.75rem !important;
+        }
+
+        /* Better form controls for touch */
+        .stSelectbox, .stSlider, .stCheckbox {
+            margin-bottom: 1rem !important;
+        }
+
+        /* Improve button tap targets */
+        button {
+            min-height: 44px !important;
+        }
+
+        /* Make captions more readable */
+        .stCaption {
+            font-size: 0.85rem !important;
+            margin-bottom: 0.5rem !important;
+        }
+
+        /* Tab improvements */
         .stTabs [data-baseweb="tab-list"] {
             flex-wrap: wrap;
             overflow-x: visible;
@@ -238,12 +291,39 @@ st.markdown(
             font-size: 1rem;
             padding: 12px 16px;
         }
+
         /* Hide desktop map, show mobile message */
         .desktop-only {
             display: none !important;
         }
         .mobile-only {
             display: block !important;
+        }
+
+        /* Make plots fill width and adjust height */
+        .js-plotly-plot {
+            width: 100% !important;
+        }
+
+        /* Adjust plot height for mobile */
+        .plotly {
+            height: 400px !important;
+        }
+
+        /* Make images responsive */
+        img {
+            max-width: 100% !important;
+            height: auto !important;
+        }
+
+        /* Improve markdown content readability */
+        .stMarkdown {
+            font-size: 0.95rem !important;
+        }
+
+        /* Reduce padding on containers */
+        [data-testid="stVerticalBlock"] > [style*="flex-direction: column"] > [data-testid="stVerticalBlock"] {
+            gap: 0.5rem !important;
         }
     }
 
