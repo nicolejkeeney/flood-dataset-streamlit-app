@@ -23,7 +23,7 @@ HEADER_COLOR = "#003D5C"
 
 # Plot styling
 PLOT_HEIGHT = 600
-PLOT_HEIGHT_MOBILE = 400  # Shorter height for mobile devices
+PLOT_HEIGHT_MOBILE = 350  # Shorter height for mobile devices
 PLOT_BG_COLOR = "white"
 WATER_COLOR = "#E6F7FF"
 GRID_COLOR = "lightgray"
@@ -217,14 +217,6 @@ st.markdown(
         display: none;
     }
 
-    /* Default: show desktop content, hide mobile message */
-    .desktop-only {
-        display: block;
-    }
-    .mobile-only {
-        display: none;
-    }
-
     /* Mobile-specific: wrap tabs to multiple rows on small screens */
     @media (max-width: 768px) {
         /* Stack columns vertically on mobile */
@@ -292,22 +284,14 @@ st.markdown(
             padding: 12px 16px;
         }
 
-        /* Hide desktop map, show mobile message */
-        .desktop-only {
-            display: none !important;
-        }
-        .mobile-only {
-            display: block !important;
-        }
-
         /* Make plots fill width and adjust height */
         .js-plotly-plot {
             width: 100% !important;
         }
 
-        /* Adjust plot height for mobile */
+        /* Adjust plot height for mobile - reduced for better mobile experience */
         .plotly {
-            height: 400px !important;
+            height: 350px !important;
         }
 
         /* Make images responsive */
@@ -324,16 +308,6 @@ st.markdown(
         /* Reduce padding on containers */
         [data-testid="stVerticalBlock"] > [style*="flex-direction: column"] > [data-testid="stVerticalBlock"] {
             gap: 0.5rem !important;
-        }
-    }
-
-    /* Desktop: hide mobile message, show map */
-    @media (min-width: 769px) {
-        .desktop-only {
-            display: block !important;
-        }
-        .mobile-only {
-            display: none !important;
         }
     }
     </style>
@@ -373,20 +347,7 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs(
 
 # ========== MAP VIEW TAB ==========
 with tab2:
-    # Mobile message
-    st.markdown(
-        """
-        <div class="mobile-only">
-            <div style="padding: 1rem; background-color: #d1ecf1; border: 1px solid #bee5eb; border-radius: 0.25rem; color: #0c5460;">
-                <strong>Interactive maps are not available on mobile devices.</strong> Please view this page on a desktop or laptop computer for the full map experience.
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    # Desktop map content
-    st.markdown('<div class="desktop-only">', unsafe_allow_html=True)
+    # Map content (now works on mobile too)
 
     @st.fragment
     def map_fragment():
@@ -527,8 +488,6 @@ with tab2:
                     st.plotly_chart(fig, width="stretch")
 
     map_fragment()
-
-    st.markdown("</div>", unsafe_allow_html=True)  # Close desktop-only div
 
 # ========== TOP REGIONS TAB ==========
 with tab3:
