@@ -216,104 +216,35 @@ st.markdown(
         display: none;
     }
 
-    /* Mobile-specific: wrap tabs to multiple rows on small screens */
+    /* Mobile-specific improvements */
     @media (max-width: 768px) {
-        /* Prevent horizontal scrolling */
-        html, body {
-            overflow-x: hidden !important;
-            max-width: 100vw !important;
-        }
-
-        /* Remove all padding/margins to use full screen width */
+        /* Better spacing for mobile */
         .main .block-container {
             padding-left: 1rem !important;
             padding-right: 1rem !important;
             padding-top: 1rem !important;
-            max-width: 100% !important;
-            overflow-x: hidden !important;
-        }
-
-        /* Stack columns vertically on mobile and force full width */
-        [data-testid="column"] {
-            width: 100% !important;
-            flex: 1 1 100% !important;
-            min-width: 100% !important;
-            max-width: 100% !important;
-            padding: 0 !important;
-        }
-
-        /* Force horizontal block containers to stack vertically */
-        [data-testid="stHorizontalBlock"] {
-            display: block !important;
-            width: 100% !important;
-        }
-
-        /* Remove gap between columns and force them to display as blocks */
-        [data-testid="stHorizontalBlock"] > [data-testid="column"] {
-            display: block !important;
-            width: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            flex: none !important;
-        }
-
-        /* Override any min-width constraints from Streamlit */
-        [data-testid="stHorizontalBlock"] > [data-testid="column"] > div {
-            width: 100% !important;
-            min-width: 100% !important;
-        }
-
-        /* Ensure plot containers use full width */
-        [data-testid="stPlotlyChart"] {
-            width: 100% !important;
-            max-width: 100% !important;
         }
 
         /* Make title more readable */
         h1 {
             font-size: 1.5rem !important;
             line-height: 1.3 !important;
-            margin-bottom: 0.5rem !important;
         }
 
         h2 {
             font-size: 1.2rem !important;
-            margin-bottom: 0.5rem !important;
-        }
-
-        h3 {
-            font-size: 1.1rem !important;
         }
 
         /* Better paragraph spacing */
         p {
             font-size: 0.95rem !important;
             line-height: 1.4 !important;
-            margin-bottom: 0.75rem !important;
         }
 
-        /* Better form controls for touch */
-        .stSelectbox, .stSlider, .stCheckbox {
-            margin-bottom: 1rem !important;
-        }
-
-        /* Improve button tap targets */
-        button {
-            min-height: 44px !important;
-        }
-
-        /* Make captions more readable */
-        .stCaption {
-            font-size: 0.85rem !important;
-            margin-bottom: 0.5rem !important;
-        }
-
-        /* Tab improvements */
+        /* Tab improvements - wrap to multiple rows */
         .stTabs [data-baseweb="tab-list"] {
             flex-wrap: wrap;
-            overflow-x: visible;
             width: 100%;
-            justify-content: flex-start;
         }
         .stTabs [data-baseweb="tab-list"] button {
             flex: 0 0 calc(50% - 2px);
@@ -322,50 +253,10 @@ st.markdown(
             padding: 12px 16px;
         }
 
-        /* Force plotly to use full available width */
-        .js-plotly-plot,
-        .plot-container,
-        .plotly {
-            width: 100% !important;
-            max-width: 100% !important;
-        }
-
-        /* Remove any internal plotly margins that might constrain width */
-        .main-svg {
-            width: 100% !important;
-            max-width: 100% !important;
-        }
-
-        /* Reduce margins around plots for better space usage */
-        [data-testid="stPlotlyChart"] {
-            margin-bottom: 0.5rem !important;
-        }
-
-        /* Make spinner messages smaller on mobile */
-        .stSpinner > div {
-            font-size: 0.9rem !important;
-        }
-
-        /* Ensure form elements span full width */
-        .stSelectbox,
-        .stSlider {
-            width: 100% !important;
-        }
-
         /* Make images responsive */
         img {
             max-width: 100% !important;
             height: auto !important;
-        }
-
-        /* Improve markdown content readability */
-        .stMarkdown {
-            font-size: 0.95rem !important;
-        }
-
-        /* Reduce padding on containers */
-        [data-testid="stVerticalBlock"] > [style*="flex-direction: column"] > [data-testid="stVerticalBlock"] {
-            gap: 0.5rem !important;
         }
     }
     </style>
@@ -411,128 +302,126 @@ with tab2:
     def map_fragment():
         """Independent map visualization with its own controls"""
 
-        # Controls in a vertical column
+        # Controls in an expander
+        with st.expander("🎛️ Chart Controls", expanded=False):
+            variable = st.selectbox(
+                "Variable",
+                [
+                    "Economic Damages",
+                    "Population Affected",
+                    "Flooded Area",
+                    "Flood Count",
+                    "Avg Precipitation (Flood)",
+                    "Avg 75th Percentile Precipitation (Flood)",
+                ],
+                index=0,
+                key="map_variable",
+            )
+            st.caption(VARIABLE_DESCRIPTIONS[variable]["long_name"])
+
+            # COMMENTED OUT - normalization disabled, always use raw values
+            normalize = False  # Always use raw values
+
+            region = st.selectbox(
+                "Geographic Level",
+                ["Admin1 (States/Provinces)", "Country", "UN Subregion"],
+                index=1,
+                key="map_region",
+            )
+
+            agg_metric = st.selectbox(
+                "Statistic",
+                ["Mean", "Median", "Max", "Sum"],
+                index=0,
+                key="map_agg",
+            )
+
+        # Chart section
         with st.container():
-            col1, col2 = st.columns([1, 4])
+            # Load data
+            geo_data = load_regional_data(region)
 
-            with col1:
-                variable = st.selectbox(
-                    "Variable",
-                    [
-                        "Economic Damages",
-                        "Population Affected",
-                        "Flooded Area",
-                        "Flood Count",
-                        "Avg Precipitation (Flood)",
-                        "Avg 75th Percentile Precipitation (Flood)",
-                    ],
-                    index=0,
-                    key="map_variable",
-                )
-                st.caption(VARIABLE_DESCRIPTIONS[variable]["long_name"])
-
+            # Build column name
+            if variable == "Flood Count":
+                value_col = "flood_count"
+            else:
+                base_col, norm_col = var_map[variable]
                 # COMMENTED OUT - normalization disabled, always use raw values
-                normalize = False  # Always use raw values
+                # base_name = norm_col if (normalize and norm_col) else base_col
+                base_name = base_col  # Always use raw (non-normalized) column
+                value_col = f"{base_name}_{agg_metric.lower()}"
 
-                region = st.selectbox(
-                    "Geographic Level",
-                    ["Admin1 (States/Provinces)", "Country", "UN Subregion"],
-                    index=1,
-                    key="map_region",
+            title = generate_title(variable, agg_metric, normalize)
+            current_colors = COLOR_PALETTES[variable]
+
+            # Determine location and name columns
+            location_col = region_id_map[region]
+            if region == "Admin1 (States/Provinces)":
+                name_col = "Admin1 (States/Provinces)"
+            elif region == "Country":
+                name_col = "Country"
+            else:
+                name_col = "UN Subregion"
+
+            with st.spinner("Loading map (expect 10-15 second lag)..."):
+                # Load country boundaries
+                country_borders = gpd.read_parquet(COUNTRY_FILEPATH)
+
+                # Create map
+                fig = px.choropleth_mapbox(
+                    geo_data,
+                    geojson=geo_data.geometry,
+                    locations=geo_data.index,
+                    color=value_col,
+                    color_continuous_scale=current_colors,
+                    mapbox_style="white-bg",
+                    center={"lat": 20, "lon": 0},
+                    zoom=0.8,
+                    opacity=1.0,
                 )
 
-                agg_metric = st.selectbox(
-                    "Statistic",
-                    ["Mean", "Median", "Max", "Sum"],
-                    index=0,
-                    key="map_agg",
+                fig.update_traces(marker_line_width=0.2, marker_line_color="white")
+
+                # Add hover
+                if name_col in geo_data.columns:
+                    customdata = np.column_stack(
+                        [
+                            geo_data[name_col],
+                            geo_data[location_col],
+                            geo_data[value_col],
+                        ]
+                    )
+                    hover_template = "<b>%{customdata[0]}</b><br>Code: %{customdata[1]}<br>Value: %{customdata[2]:.2f}<extra></extra>"
+                    fig.update_traces(
+                        customdata=customdata, hovertemplate=hover_template
+                    )
+
+                # Add country borders
+                country_trace = px.choropleth_mapbox(
+                    country_borders,
+                    geojson=country_borders.geometry,
+                    locations=country_borders.index,
+                    color_discrete_sequence=["rgba(0,0,0,0)"],
+                    mapbox_style="white-bg",
+                ).data[0]
+
+                country_trace.marker.line.width = 0.5
+                country_trace.marker.line.color = "#A9A9A9"
+                country_trace.showlegend = False
+                country_trace.hoverinfo = "skip"
+                country_trace.hovertemplate = None
+
+                fig.add_trace(country_trace)
+
+                fig.update_layout(
+                    height=PLOT_HEIGHT,
+                    autosize=True,
+                    font=dict(color=HEADER_COLOR),
+                    title=get_plot_title_config(f"{title} by {region}"),
+                    margin={"r": 0, "t": 50, "l": 0, "b": 0},
                 )
 
-            with col2:
-                # Load data
-                geo_data = load_regional_data(region)
-
-                # Build column name
-                if variable == "Flood Count":
-                    value_col = "flood_count"
-                else:
-                    base_col, norm_col = var_map[variable]
-                    # COMMENTED OUT - normalization disabled, always use raw values
-                    # base_name = norm_col if (normalize and norm_col) else base_col
-                    base_name = base_col  # Always use raw (non-normalized) column
-                    value_col = f"{base_name}_{agg_metric.lower()}"
-
-                title = generate_title(variable, agg_metric, normalize)
-                current_colors = COLOR_PALETTES[variable]
-
-                # Determine location and name columns
-                location_col = region_id_map[region]
-                if region == "Admin1 (States/Provinces)":
-                    name_col = "Admin1 (States/Provinces)"
-                elif region == "Country":
-                    name_col = "Country"
-                else:
-                    name_col = "UN Subregion"
-
-                with st.spinner("Loading map (expect 10-15 second lag)..."):
-                    # Load country boundaries
-                    country_borders = gpd.read_parquet(COUNTRY_FILEPATH)
-
-                    # Create map
-                    fig = px.choropleth_mapbox(
-                        geo_data,
-                        geojson=geo_data.geometry,
-                        locations=geo_data.index,
-                        color=value_col,
-                        color_continuous_scale=current_colors,
-                        mapbox_style="white-bg",
-                        center={"lat": 20, "lon": 0},
-                        zoom=0.8,
-                        opacity=1.0,
-                    )
-
-                    fig.update_traces(marker_line_width=0.2, marker_line_color="white")
-
-                    # Add hover
-                    if name_col in geo_data.columns:
-                        customdata = np.column_stack(
-                            [
-                                geo_data[name_col],
-                                geo_data[location_col],
-                                geo_data[value_col],
-                            ]
-                        )
-                        hover_template = "<b>%{customdata[0]}</b><br>Code: %{customdata[1]}<br>Value: %{customdata[2]:.2f}<extra></extra>"
-                        fig.update_traces(
-                            customdata=customdata, hovertemplate=hover_template
-                        )
-
-                    # Add country borders
-                    country_trace = px.choropleth_mapbox(
-                        country_borders,
-                        geojson=country_borders.geometry,
-                        locations=country_borders.index,
-                        color_discrete_sequence=["rgba(0,0,0,0)"],
-                        mapbox_style="white-bg",
-                    ).data[0]
-
-                    country_trace.marker.line.width = 0.5
-                    country_trace.marker.line.color = "#A9A9A9"
-                    country_trace.showlegend = False
-                    country_trace.hoverinfo = "skip"
-                    country_trace.hovertemplate = None
-
-                    fig.add_trace(country_trace)
-
-                    fig.update_layout(
-                        height=PLOT_HEIGHT,
-                        autosize=True,
-                        font=dict(color=HEADER_COLOR),
-                        title=get_plot_title_config(f"{title} by {region}"),
-                        margin={"r": 0, "t": 50, "l": 0, "b": 0},
-                    )
-
-                    st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True)
 
     map_fragment()
 
@@ -543,153 +432,151 @@ with tab3:
     def bar_fragment():
         """Independent bar chart with its own controls"""
 
-        # Controls in a vertical column
+        # Controls in an expander
+        with st.expander("🎛️ Chart Controls", expanded=False):
+            variable = st.selectbox(
+                "Variable",
+                [
+                    "Economic Damages",
+                    "Population Affected",
+                    "Flooded Area",
+                    "Flood Count",
+                    "Avg Precipitation (Flood)",
+                    "Avg 75th Percentile Precipitation (Flood)",
+                ],
+                index=0,
+                key="bar_variable",
+            )
+            st.caption(VARIABLE_DESCRIPTIONS[variable]["long_name"])
+
+            # COMMENTED OUT - normalization disabled, always use raw values
+            normalize = False  # Always use raw values
+
+            region = st.selectbox(
+                "Geographic Level",
+                ["Admin1 (States/Provinces)", "Country", "UN Subregion"],
+                index=0,
+                key="bar_region",
+            )
+
+            agg_metric = st.selectbox(
+                "Statistic",
+                ["Mean", "Median", "Max", "Sum"],
+                index=0,
+                key="bar_agg",
+            )
+
+            max_regions = 15 if region == "UN Subregion" else 30
+            num_regions = st.slider(
+                "Number of regions",
+                min_value=5,
+                max_value=max_regions,
+                value=15,
+                step=1,
+                key="bar_num",
+            )
+
+        # Chart section
         with st.container():
-            col1, col2 = st.columns([1, 4])
+            # Load data
+            geo_data = load_regional_data(region)
 
-            with col1:
-                variable = st.selectbox(
-                    "Variable",
-                    [
-                        "Economic Damages",
-                        "Population Affected",
-                        "Flooded Area",
-                        "Flood Count",
-                        "Avg Precipitation (Flood)",
-                        "Avg 75th Percentile Precipitation (Flood)",
-                    ],
-                    index=0,
-                    key="bar_variable",
-                )
-                st.caption(VARIABLE_DESCRIPTIONS[variable]["long_name"])
-
+            # Build column name
+            if variable == "Flood Count":
+                value_col = "flood_count"
+            else:
+                base_col, norm_col = var_map[variable]
                 # COMMENTED OUT - normalization disabled, always use raw values
-                normalize = False  # Always use raw values
+                # base_name = norm_col if (normalize and norm_col) else base_col
+                base_name = base_col  # Always use raw (non-normalized) column
+                value_col = f"{base_name}_{agg_metric.lower()}"
 
-                region = st.selectbox(
-                    "Geographic Level",
-                    ["Admin1 (States/Provinces)", "Country", "UN Subregion"],
-                    index=0,
-                    key="bar_region",
-                )
+            title = generate_title(variable, agg_metric, normalize)
+            current_colors = COLOR_PALETTES[variable]
 
-                agg_metric = st.selectbox(
-                    "Statistic",
-                    ["Mean", "Median", "Max", "Sum"],
-                    index=0,
-                    key="bar_agg",
-                )
-
-                max_regions = 15 if region == "UN Subregion" else 30
-                num_regions = st.slider(
-                    "Number of regions",
-                    min_value=5,
-                    max_value=max_regions,
-                    value=15,
-                    step=1,
-                    key="bar_num",
-                )
-
-            with col2:
-                # Load data
-                geo_data = load_regional_data(region)
-
-                # Build column name
-                if variable == "Flood Count":
-                    value_col = "flood_count"
-                else:
-                    base_col, norm_col = var_map[variable]
-                    # COMMENTED OUT - normalization disabled, always use raw values
-                    # base_name = norm_col if (normalize and norm_col) else base_col
-                    base_name = base_col  # Always use raw (non-normalized) column
-                    value_col = f"{base_name}_{agg_metric.lower()}"
-
-                title = generate_title(variable, agg_metric, normalize)
-                current_colors = COLOR_PALETTES[variable]
-
-                # Determine display names
-                if region == "Admin1 (States/Provinces)":
-                    if (
-                        "Admin1 (States/Provinces)" in geo_data.columns
-                        and "Country" in geo_data.columns
-                    ):
-                        geo_data_copy = geo_data.copy()
-                        geo_data_copy["Display Name"] = (
-                            geo_data_copy["Admin1 (States/Provinces)"].astype(str)
-                            + ", "
-                            + geo_data_copy["Country"].astype(str)
-                        )
-                        display_col = "Display Name"
-                        top_n = (
-                            geo_data_copy[[display_col, value_col]]
-                            .nlargest(num_regions, value_col)
-                            .copy()
-                        )
-                    else:
-                        display_col = region_id_map[region]
-                        top_n = (
-                            geo_data[[display_col, value_col]]
-                            .nlargest(num_regions, value_col)
-                            .copy()
-                        )
-                elif region == "Country":
-                    display_col = (
-                        "Country"
-                        if "Country" in geo_data.columns
-                        else region_id_map[region]
+            # Determine display names
+            if region == "Admin1 (States/Provinces)":
+                if (
+                    "Admin1 (States/Provinces)" in geo_data.columns
+                    and "Country" in geo_data.columns
+                ):
+                    geo_data_copy = geo_data.copy()
+                    geo_data_copy["Display Name"] = (
+                        geo_data_copy["Admin1 (States/Provinces)"].astype(str)
+                        + ", "
+                        + geo_data_copy["Country"].astype(str)
                     )
+                    display_col = "Display Name"
+                    top_n = (
+                        geo_data_copy[[display_col, value_col]]
+                        .nlargest(num_regions, value_col)
+                        .copy()
+                    )
+                else:
+                    display_col = region_id_map[region]
                     top_n = (
                         geo_data[[display_col, value_col]]
                         .nlargest(num_regions, value_col)
                         .copy()
                     )
-                else:
-                    display_col = (
-                        "UN Subregion"
-                        if "UN Subregion" in geo_data.columns
-                        else region_id_map[region]
-                    )
-                    top_n = (
-                        geo_data[[display_col, value_col]]
-                        .nlargest(num_regions, value_col)
-                        .copy()
-                    )
-
-                top_n.columns = ["Region", title]
-                top_n = top_n.reset_index(drop=True)
-                top_n.index = top_n.index + 1
-
-                # Create bar chart
-                bar_fig = px.bar(
-                    top_n,
-                    x=title,
-                    y="Region",
-                    orientation="h",
-                    color=title,
-                    color_continuous_scale=current_colors,
-                    labels={title: title, "Region": ""},
+            elif region == "Country":
+                display_col = (
+                    "Country"
+                    if "Country" in geo_data.columns
+                    else region_id_map[region]
+                )
+                top_n = (
+                    geo_data[[display_col, value_col]]
+                    .nlargest(num_regions, value_col)
+                    .copy()
+                )
+            else:
+                display_col = (
+                    "UN Subregion"
+                    if "UN Subregion" in geo_data.columns
+                    else region_id_map[region]
+                )
+                top_n = (
+                    geo_data[[display_col, value_col]]
+                    .nlargest(num_regions, value_col)
+                    .copy()
                 )
 
-                bar_fig.update_layout(
-                    height=PLOT_HEIGHT,
-                    autosize=True,
-                    showlegend=False,
-                    yaxis={"categoryorder": "total ascending"},
-                    font=dict(color=HEADER_COLOR),
-                    plot_bgcolor=PLOT_BG_COLOR,
-                    paper_bgcolor=PLOT_BG_COLOR,
-                    title=get_plot_title_config(title),
-                    coloraxis_showscale=False,
-                    margin={"l": 10, "r": 10, "t": 50, "b": 10},
-                )
+            top_n.columns = ["Region", title]
+            top_n = top_n.reset_index(drop=True)
+            top_n.index = top_n.index + 1
 
-                bar_fig.update_traces(
-                    hovertemplate="<b>%{y}</b><br>"
-                    + title
-                    + ": %{x:.2f}<extra></extra>"
-                )
+            # Create bar chart
+            bar_fig = px.bar(
+                top_n,
+                x=title,
+                y="Region",
+                orientation="h",
+                color=title,
+                color_continuous_scale=current_colors,
+                labels={title: title, "Region": ""},
+            )
 
-                st.plotly_chart(bar_fig, use_container_width=True)
+            bar_fig.update_layout(
+                height=PLOT_HEIGHT,
+                autosize=True,
+                showlegend=False,
+                yaxis={"categoryorder": "total ascending"},
+                font=dict(color=HEADER_COLOR),
+                plot_bgcolor=PLOT_BG_COLOR,
+                paper_bgcolor=PLOT_BG_COLOR,
+                title=get_plot_title_config(title),
+                coloraxis_showscale=False,
+                margin={"l": 10, "r": 10, "t": 50, "b": 10},
+            )
+
+            bar_fig.update_traces(
+                hovertemplate="<b>%{y}</b><br>"
+                + title
+                + ": %{x:.2f}<extra></extra>"
+            )
+
+            st.plotly_chart(bar_fig, use_container_width=True)
 
     bar_fragment()
 
@@ -700,73 +587,71 @@ with tab1:
     def timeseries_fragment():
         """Independent timeseries with its own controls"""
 
-        # Controls in a vertical column
+        # Controls in an expander
+        with st.expander("🎛️ Chart Controls", expanded=False):
+            variable = st.selectbox(
+                "Variable",
+                [
+                    "Economic Damages",
+                    "Population Affected",
+                    "Flooded Area",
+                    "Flood Count",
+                ],
+                index=0,
+                key="ts_variable",
+            )
+            st.caption(VARIABLE_DESCRIPTIONS[variable]["long_name"])
+
+            # COMMENTED OUT - normalization disabled globally, always use raw values
+            # Always use raw (non-normalized) values for timeseries
+            normalize = False
+
+        # Chart section
         with st.container():
-            col1, col2 = st.columns([1, 4])
+            # Load data
+            annual_data = load_annual_data()
 
-            with col1:
-                variable = st.selectbox(
-                    "Variable",
-                    [
-                        "Economic Damages",
-                        "Population Affected",
-                        "Flooded Area",
-                        "Flood Count",
-                    ],
-                    index=0,
-                    key="ts_variable",
-                )
-                st.caption(VARIABLE_DESCRIPTIONS[variable]["long_name"])
+            # Select column
+            if variable == "Flood Count":
+                ts_col = "flood_count"
+                ts_label = f"Total {variable} by Year"
+            else:
+                base_col, norm_col_name = var_map[variable]
+                # COMMENTED OUT - normalization disabled, always use raw values
+                # ts_col = (
+                #     norm_col_name if (normalize and norm_col_name) else base_col
+                # )
+                ts_col = base_col  # Always use raw (non-normalized) column
+                ts_label = f"Total {variable} by Year"
 
-                # COMMENTED OUT - normalization disabled globally, always use raw values
-                # Always use raw (non-normalized) values for timeseries
-                normalize = False
+            current_colors = COLOR_PALETTES[variable]
 
-            with col2:
-                # Load data
-                annual_data = load_annual_data()
+            # Create bar chart
+            bar_fig = px.bar(
+                annual_data,
+                x="year",
+                y=ts_col,
+                labels={"year": "Year", ts_col: ts_label},
+                color=ts_col,
+                color_continuous_scale=current_colors,
+            )
 
-                # Select column
-                if variable == "Flood Count":
-                    ts_col = "flood_count"
-                    ts_label = f"Total {variable} by Year"
-                else:
-                    base_col, norm_col_name = var_map[variable]
-                    # COMMENTED OUT - normalization disabled, always use raw values
-                    # ts_col = (
-                    #     norm_col_name if (normalize and norm_col_name) else base_col
-                    # )
-                    ts_col = base_col  # Always use raw (non-normalized) column
-                    ts_label = f"Total {variable} by Year"
+            bar_fig.update_layout(
+                height=PLOT_HEIGHT,
+                autosize=True,
+                font=dict(color=HEADER_COLOR),
+                plot_bgcolor=PLOT_BG_COLOR,
+                paper_bgcolor=PLOT_BG_COLOR,
+                showlegend=False,
+                title=get_plot_title_config(ts_label),
+                coloraxis_showscale=False,
+                margin={"l": 10, "r": 10, "t": 50, "b": 10},
+            )
 
-                current_colors = COLOR_PALETTES[variable]
+            bar_fig.update_xaxes(showgrid=True, gridcolor=GRID_COLOR)
+            bar_fig.update_yaxes(showgrid=True, gridcolor=GRID_COLOR)
 
-                # Create bar chart
-                bar_fig = px.bar(
-                    annual_data,
-                    x="year",
-                    y=ts_col,
-                    labels={"year": "Year", ts_col: ts_label},
-                    color=ts_col,
-                    color_continuous_scale=current_colors,
-                )
-
-                bar_fig.update_layout(
-                    height=PLOT_HEIGHT,
-                    autosize=True,
-                    font=dict(color=HEADER_COLOR),
-                    plot_bgcolor=PLOT_BG_COLOR,
-                    paper_bgcolor=PLOT_BG_COLOR,
-                    showlegend=False,
-                    title=get_plot_title_config(ts_label),
-                    coloraxis_showscale=False,
-                    margin={"l": 10, "r": 10, "t": 50, "b": 10},
-                )
-
-                bar_fig.update_xaxes(showgrid=True, gridcolor=GRID_COLOR)
-                bar_fig.update_yaxes(showgrid=True, gridcolor=GRID_COLOR)
-
-                st.plotly_chart(bar_fig, use_container_width=True)
+            st.plotly_chart(bar_fig, use_container_width=True)
 
     timeseries_fragment()
 
