@@ -214,16 +214,39 @@ st.markdown(
 
     /* Mobile-specific: wrap tabs to multiple rows on small screens */
     @media (max-width: 768px) {
-        /* Stack columns vertically on mobile */
+        /* Remove all padding/margins to use full screen width */
+        .main .block-container {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+            padding-top: 1rem !important;
+            max-width: 100% !important;
+        }
+
+        /* Stack columns vertically on mobile and force full width */
         [data-testid="column"] {
             width: 100% !important;
             flex: 1 1 100% !important;
             min-width: 100% !important;
+            max-width: 100% !important;
+            padding: 0 !important;
         }
 
-        /* Better spacing for mobile */
-        .stApp {
-            padding: 0.5rem !important;
+        /* Force horizontal block containers to stack vertically */
+        [data-testid="stHorizontalBlock"] {
+            flex-direction: column !important;
+            gap: 0 !important;
+        }
+
+        /* Remove gap between columns */
+        [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Ensure plot containers use full width */
+        [data-testid="stPlotlyChart"] {
+            width: 100% !important;
+            max-width: 100% !important;
         }
 
         /* Make title more readable */
@@ -279,6 +302,20 @@ st.markdown(
             padding: 12px 16px;
         }
 
+        /* Force plotly to use full available width */
+        .js-plotly-plot,
+        .plot-container,
+        .plotly {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        /* Remove any internal plotly margins that might constrain width */
+        .main-svg {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
         /* Reduce margins around plots for better space usage */
         [data-testid="stPlotlyChart"] {
             margin-bottom: 0.5rem !important;
@@ -287,6 +324,12 @@ st.markdown(
         /* Make spinner messages smaller on mobile */
         .stSpinner > div {
             font-size: 0.9rem !important;
+        }
+
+        /* Ensure form elements span full width */
+        .stSelectbox,
+        .stSlider {
+            width: 100% !important;
         }
 
         /* Make images responsive */
@@ -617,6 +660,7 @@ with tab3:
                     paper_bgcolor=PLOT_BG_COLOR,
                     title=get_plot_title_config(title),
                     coloraxis_showscale=False,
+                    margin={"l": 10, "r": 10, "t": 50, "b": 10},
                 )
 
                 bar_fig.update_traces(
@@ -696,6 +740,7 @@ with tab1:
                     showlegend=False,
                     title=get_plot_title_config(ts_label),
                     coloraxis_showscale=False,
+                    margin={"l": 10, "r": 10, "t": 50, "b": 10},
                 )
 
                 bar_fig.update_xaxes(showgrid=True, gridcolor=GRID_COLOR)
