@@ -255,39 +255,38 @@ if view == "Map View":
     def map_fragment():
         """Independent map visualization with its own controls"""
 
-        # Controls in an expander
-        with st.expander("🎛️ Chart Controls", expanded=False):
-            variable = st.selectbox(
-                "Variable",
-                [
-                    "Economic Damages",
-                    "Population Affected",
-                    "Flooded Area",
-                    "Flood Count",
-                    "Avg Precipitation (Flood)",
-                    "Avg 75th Percentile Precipitation (Flood)",
-                ],
-                index=0,
-                key="map_variable",
-            )
-            st.caption(VARIABLE_DESCRIPTIONS[variable]["long_name"])
+        # Controls
+        variable = st.selectbox(
+            "Variable",
+            [
+                "Economic Damages",
+                "Population Affected",
+                "Flooded Area",
+                "Flood Count",
+                "Avg Precipitation (Flood)",
+                "Avg 75th Percentile Precipitation (Flood)",
+            ],
+            index=0,
+            key="map_variable",
+        )
+        st.caption(VARIABLE_DESCRIPTIONS[variable]["long_name"])
 
-            # COMMENTED OUT - normalization disabled, always use raw values
-            normalize = False  # Always use raw values
+        # COMMENTED OUT - normalization disabled, always use raw values
+        normalize = False  # Always use raw values
 
-            region = st.selectbox(
-                "Geographic Level",
-                ["Admin1 (States/Provinces)", "Country", "UN Subregion"],
-                index=1,
-                key="map_region",
-            )
+        region = st.selectbox(
+            "Geographic Level",
+            ["Admin1 (States/Provinces)", "Country", "UN Subregion"],
+            index=1,
+            key="map_region",
+        )
 
-            agg_metric = st.selectbox(
-                "Statistic",
-                ["Mean", "Median", "Max", "Sum"],
-                index=0,
-                key="map_agg",
-            )
+        agg_metric = st.selectbox(
+            "Statistic",
+            ["Mean", "Median", "Max", "Sum"],
+            index=0,
+            key="map_agg",
+        )
 
         # Chart section
         with st.container():
@@ -385,49 +384,48 @@ elif view == "Top Regions":
     def bar_fragment():
         """Independent bar chart with its own controls"""
 
-        # Controls in an expander
-        with st.expander("🎛️ Chart Controls", expanded=False):
-            variable = st.selectbox(
-                "Variable",
-                [
-                    "Economic Damages",
-                    "Population Affected",
-                    "Flooded Area",
-                    "Flood Count",
-                    "Avg Precipitation (Flood)",
-                    "Avg 75th Percentile Precipitation (Flood)",
-                ],
-                index=0,
-                key="bar_variable",
-            )
-            st.caption(VARIABLE_DESCRIPTIONS[variable]["long_name"])
+        # Controls
+        variable = st.selectbox(
+            "Variable",
+            [
+                "Economic Damages",
+                "Population Affected",
+                "Flooded Area",
+                "Flood Count",
+                "Avg Precipitation (Flood)",
+                "Avg 75th Percentile Precipitation (Flood)",
+            ],
+            index=0,
+            key="bar_variable",
+        )
+        st.caption(VARIABLE_DESCRIPTIONS[variable]["long_name"])
 
-            # COMMENTED OUT - normalization disabled, always use raw values
-            normalize = False  # Always use raw values
+        # COMMENTED OUT - normalization disabled, always use raw values
+        normalize = False  # Always use raw values
 
-            region = st.selectbox(
-                "Geographic Level",
-                ["Admin1 (States/Provinces)", "Country", "UN Subregion"],
-                index=0,
-                key="bar_region",
-            )
+        region = st.selectbox(
+            "Geographic Level",
+            ["Admin1 (States/Provinces)", "Country", "UN Subregion"],
+            index=0,
+            key="bar_region",
+        )
 
-            agg_metric = st.selectbox(
-                "Statistic",
-                ["Mean", "Median", "Max", "Sum"],
-                index=0,
-                key="bar_agg",
-            )
+        agg_metric = st.selectbox(
+            "Statistic",
+            ["Mean", "Median", "Max", "Sum"],
+            index=0,
+            key="bar_agg",
+        )
 
-            max_regions = 15 if region == "UN Subregion" else 30
-            num_regions = st.slider(
-                "Number of regions",
-                min_value=5,
-                max_value=max_regions,
-                value=15,
-                step=1,
-                key="bar_num",
-            )
+        max_regions = 15 if region == "UN Subregion" else 30
+        num_regions = st.slider(
+            "Number of regions",
+            min_value=5,
+            max_value=max_regions,
+            value=15,
+            step=1,
+            key="bar_num",
+        )
 
         # Chart section
         with st.container():
@@ -540,24 +538,23 @@ elif view == "Global Annual Trends":
     def timeseries_fragment():
         """Independent timeseries with its own controls"""
 
-        # Controls in an expander
-        with st.expander("🎛️ Chart Controls", expanded=False):
-            variable = st.selectbox(
-                "Variable",
-                [
-                    "Economic Damages",
-                    "Population Affected",
-                    "Flooded Area",
-                    "Flood Count",
-                ],
-                index=0,
-                key="ts_variable",
-            )
-            st.caption(VARIABLE_DESCRIPTIONS[variable]["long_name"])
+        # Controls
+        variable = st.selectbox(
+            "Variable",
+            [
+                "Economic Damages",
+                "Population Affected",
+                "Flooded Area",
+                "Flood Count",
+            ],
+            index=0,
+            key="ts_variable",
+        )
+        st.caption(VARIABLE_DESCRIPTIONS[variable]["long_name"])
 
-            # COMMENTED OUT - normalization disabled globally, always use raw values
-            # Always use raw (non-normalized) values for timeseries
-            normalize = False
+        # COMMENTED OUT - normalization disabled globally, always use raw values
+        # Always use raw (non-normalized) values for timeseries
+        normalize = False
 
         # Chart section
         with st.container():
