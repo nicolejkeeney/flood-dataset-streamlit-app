@@ -775,7 +775,7 @@ elif view == "About":
     st.markdown(
         "**Nicole Keeney**  \n"
         "[LinkedIn](https://www.linkedin.com/in/nicole-keeney/) | [GitHub](https://github.com/nicolejkeeney)  \n"
-        "MS, Civil & Environmental Engineering (2025) @ Colorado State University — [Davenport Research Group](https://fdavenport.github.io/)"
+        "MS, Civil & Environmental Engineering (2025) @ Colorado State University"
     )
 
     st.markdown("### Abstract")
