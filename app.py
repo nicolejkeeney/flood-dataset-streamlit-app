@@ -22,15 +22,13 @@ LAND_OUTLINE_FILEPATH = f"{DATA_DIR}app_land_outline.parquet"
 HEADER_COLOR = "#003D5C"
 
 # Plot styling
-PLOT_HEIGHT = 600
-PLOT_HEIGHT_MOBILE = 280  # Optimal height for mobile devices
+PLOT_HEIGHT = 500  # Balanced height that works for both desktop and mobile
 PLOT_BG_COLOR = "white"
 WATER_COLOR = "#E6F7FF"
 GRID_COLOR = "lightgray"
 
 # Widget defaults
 DEFAULT_VARIABLE = "Economic Damages"
-# DEFAULT_NORMALIZE = True  # COMMENTED OUT - using raw values only
 DEFAULT_REGION = "Admin1 (States/Provinces)"
 DEFAULT_AGG_METRIC = "Mean"
 DEFAULT_NUM_REGIONS = 15
@@ -40,24 +38,21 @@ MAX_NUM_REGIONS = 30
 VARIABLE_DESCRIPTIONS = {
     "Economic Damages": {
         "long_name": "Total economic damages adjusted to 2023 U.S dollar equivalent.",
-        "norm_descrip": "Normalized by GDP",
     },
     "Population Affected": {
         "long_name": "Number of people injured, made homeless, or otherwise impacted by the flood.",
-        "norm_descrip": "Normalized by total population",
     },
     "Flooded Area": {
         "long_name": "Total inundated area derived from MODIS satellite imagery.",
-        "norm_descrip": "Normalized by total area",
     },
-    "Flood Count": {"long_name": "Number of recorded floods.", "norm_descrip": ""},
+    "Flood Count": {
+        "long_name": "Number of recorded floods.",
+    },
     "Avg Precipitation (Flood)": {
         "long_name": "Average precipitation rate during floods.",
-        "norm_descrip": "",
     },
     "Avg 75th Percentile Precipitation (Flood)": {
         "long_name": "Average of the top 25% of precipitation rates during floods. Indicates heavy rainfall.",
-        "norm_descrip": "",
     },
 }
 
@@ -284,30 +279,6 @@ st.markdown(
             padding: 12px 16px;
         }
 
-        /* Make plots fill width and adjust height */
-        .js-plotly-plot {
-            width: 100% !important;
-        }
-
-        /* Adjust plot height for mobile - optimal size for mobile viewing */
-        .plotly,
-        .js-plotly-plot,
-        .plot-container,
-        [data-testid="stPlotlyChart"] {
-            height: 280px !important;
-            max-height: 280px !important;
-        }
-
-        /* Force plotly chart container to respect height */
-        [data-testid="stPlotlyChart"] > div {
-            height: 280px !important;
-        }
-
-        /* Ensure plot SVG respects mobile height */
-        .main-svg {
-            height: 280px !important;
-        }
-
         /* Reduce margins around plots for better space usage */
         [data-testid="stPlotlyChart"] {
             margin-bottom: 0.5rem !important;
@@ -397,19 +368,7 @@ with tab2:
                 )
                 st.caption(VARIABLE_DESCRIPTIONS[variable]["long_name"])
 
-                precip_vars = [
-                    "Avg Precipitation (Flood)",
-                    "Avg 75th Percentile Precipitation (Flood)",
-                ]
                 # COMMENTED OUT - normalization disabled, always use raw values
-                # if variable not in ["Flood Count"] + precip_vars:
-                #     normalize = st.checkbox(
-                #         "Normalize", value=True, key="map_normalize"
-                #     )
-                #     if VARIABLE_DESCRIPTIONS[variable]["norm_descrip"]:
-                #         st.caption(VARIABLE_DESCRIPTIONS[variable]["norm_descrip"])
-                # else:
-                #     normalize = False
                 normalize = False  # Always use raw values
 
                 region = st.selectbox(
@@ -504,12 +463,13 @@ with tab2:
 
                     fig.update_layout(
                         height=PLOT_HEIGHT,
+                        autosize=True,
                         font=dict(color=HEADER_COLOR),
                         title=get_plot_title_config(f"{title} by {region}"),
                         margin={"r": 0, "t": 50, "l": 0, "b": 0},
                     )
 
-                    st.plotly_chart(fig, width="stretch")
+                    st.plotly_chart(fig, use_container_width=True)
 
     map_fragment()
 
@@ -540,19 +500,7 @@ with tab3:
                 )
                 st.caption(VARIABLE_DESCRIPTIONS[variable]["long_name"])
 
-                precip_vars = [
-                    "Avg Precipitation (Flood)",
-                    "Avg 75th Percentile Precipitation (Flood)",
-                ]
                 # COMMENTED OUT - normalization disabled, always use raw values
-                # if variable not in ["Flood Count"] + precip_vars:
-                #     normalize = st.checkbox(
-                #         "Normalize", value=True, key="bar_normalize"
-                #     )
-                #     if VARIABLE_DESCRIPTIONS[variable]["norm_descrip"]:
-                #         st.caption(VARIABLE_DESCRIPTIONS[variable]["norm_descrip"])
-                # else:
-                #     normalize = False
                 normalize = False  # Always use raw values
 
                 region = st.selectbox(
@@ -661,6 +609,7 @@ with tab3:
 
                 bar_fig.update_layout(
                     height=PLOT_HEIGHT,
+                    autosize=True,
                     showlegend=False,
                     yaxis={"categoryorder": "total ascending"},
                     font=dict(color=HEADER_COLOR),
@@ -676,7 +625,7 @@ with tab3:
                     + ": %{x:.2f}<extra></extra>"
                 )
 
-                st.plotly_chart(bar_fig, width="stretch")
+                st.plotly_chart(bar_fig, use_container_width=True)
 
     bar_fragment()
 
@@ -740,6 +689,7 @@ with tab1:
 
                 bar_fig.update_layout(
                     height=PLOT_HEIGHT,
+                    autosize=True,
                     font=dict(color=HEADER_COLOR),
                     plot_bgcolor=PLOT_BG_COLOR,
                     paper_bgcolor=PLOT_BG_COLOR,
@@ -751,7 +701,7 @@ with tab1:
                 bar_fig.update_xaxes(showgrid=True, gridcolor=GRID_COLOR)
                 bar_fig.update_yaxes(showgrid=True, gridcolor=GRID_COLOR)
 
-                st.plotly_chart(bar_fig, width="stretch")
+                st.plotly_chart(bar_fig, use_container_width=True)
 
     timeseries_fragment()
 
