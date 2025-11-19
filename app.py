@@ -23,7 +23,7 @@ HEADER_COLOR = "#003D5C"
 
 # Plot styling
 PLOT_HEIGHT = 600
-PLOT_HEIGHT_MOBILE = 350  # Shorter height for mobile devices
+PLOT_HEIGHT_MOBILE = 280  # Optimal height for mobile devices
 PLOT_BG_COLOR = "white"
 WATER_COLOR = "#E6F7FF"
 GRID_COLOR = "lightgray"
@@ -289,9 +289,33 @@ st.markdown(
             width: 100% !important;
         }
 
-        /* Adjust plot height for mobile - reduced for better mobile experience */
-        .plotly {
-            height: 350px !important;
+        /* Adjust plot height for mobile - optimal size for mobile viewing */
+        .plotly,
+        .js-plotly-plot,
+        .plot-container,
+        [data-testid="stPlotlyChart"] {
+            height: 280px !important;
+            max-height: 280px !important;
+        }
+
+        /* Force plotly chart container to respect height */
+        [data-testid="stPlotlyChart"] > div {
+            height: 280px !important;
+        }
+
+        /* Ensure plot SVG respects mobile height */
+        .main-svg {
+            height: 280px !important;
+        }
+
+        /* Reduce margins around plots for better space usage */
+        [data-testid="stPlotlyChart"] {
+            margin-bottom: 0.5rem !important;
+        }
+
+        /* Make spinner messages smaller on mobile */
+        .stSpinner > div {
+            font-size: 0.9rem !important;
         }
 
         /* Make images responsive */
