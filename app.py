@@ -29,7 +29,7 @@ GRID_COLOR = "lightgray"
 
 # Widget defaults
 DEFAULT_VARIABLE = "Economic Damages"
-DEFAULT_NORMALIZE = True
+# DEFAULT_NORMALIZE = True  # COMMENTED OUT - using raw values only
 DEFAULT_REGION = "Admin1 (States/Provinces)"
 DEFAULT_AGG_METRIC = "Mean"
 DEFAULT_NUM_REGIONS = 15
@@ -134,13 +134,14 @@ def generate_title(variable, agg_metric, normalize):
     if variable in precip_vars:
         return f"{agg_metric} {variable}"
 
-    if normalize:
-        norm_labels = {
-            "Economic Damages": f"{agg_metric} Economic Damages (% of GDP)",
-            "Population Affected": f"{agg_metric} Population Affected (% of Total)",
-            "Flooded Area": f"{agg_metric} Flooded Area (% of Total Area)",
-        }
-        return norm_labels.get(variable, f"{agg_metric} {variable}")
+    # COMMENTED OUT - normalization disabled, always use raw values
+    # if normalize:
+    #     norm_labels = {
+    #         "Economic Damages": f"{agg_metric} Economic Damages (% of GDP)",
+    #         "Population Affected": f"{agg_metric} Population Affected (% of Total)",
+    #         "Flooded Area": f"{agg_metric} Flooded Area (% of Total Area)",
+    #     }
+    #     return norm_labels.get(variable, f"{agg_metric} {variable}")
 
     return f"{agg_metric} {variable}"
 
@@ -335,14 +336,16 @@ with tab2:
                     "Avg Precipitation (Flood)",
                     "Avg 75th Percentile Precipitation (Flood)",
                 ]
-                if variable not in ["Flood Count"] + precip_vars:
-                    normalize = st.checkbox(
-                        "Normalize", value=True, key="map_normalize"
-                    )
-                    if VARIABLE_DESCRIPTIONS[variable]["norm_descrip"]:
-                        st.caption(VARIABLE_DESCRIPTIONS[variable]["norm_descrip"])
-                else:
-                    normalize = False
+                # COMMENTED OUT - normalization disabled, always use raw values
+                # if variable not in ["Flood Count"] + precip_vars:
+                #     normalize = st.checkbox(
+                #         "Normalize", value=True, key="map_normalize"
+                #     )
+                #     if VARIABLE_DESCRIPTIONS[variable]["norm_descrip"]:
+                #         st.caption(VARIABLE_DESCRIPTIONS[variable]["norm_descrip"])
+                # else:
+                #     normalize = False
+                normalize = False  # Always use raw values
 
                 region = st.selectbox(
                     "Geographic Level",
@@ -367,7 +370,9 @@ with tab2:
                     value_col = "flood_count"
                 else:
                     base_col, norm_col = var_map[variable]
-                    base_name = norm_col if (normalize and norm_col) else base_col
+                    # COMMENTED OUT - normalization disabled, always use raw values
+                    # base_name = norm_col if (normalize and norm_col) else base_col
+                    base_name = base_col  # Always use raw (non-normalized) column
                     value_col = f"{base_name}_{agg_metric.lower()}"
 
                 title = generate_title(variable, agg_metric, normalize)
@@ -476,14 +481,16 @@ with tab3:
                     "Avg Precipitation (Flood)",
                     "Avg 75th Percentile Precipitation (Flood)",
                 ]
-                if variable not in ["Flood Count"] + precip_vars:
-                    normalize = st.checkbox(
-                        "Normalize", value=True, key="bar_normalize"
-                    )
-                    if VARIABLE_DESCRIPTIONS[variable]["norm_descrip"]:
-                        st.caption(VARIABLE_DESCRIPTIONS[variable]["norm_descrip"])
-                else:
-                    normalize = False
+                # COMMENTED OUT - normalization disabled, always use raw values
+                # if variable not in ["Flood Count"] + precip_vars:
+                #     normalize = st.checkbox(
+                #         "Normalize", value=True, key="bar_normalize"
+                #     )
+                #     if VARIABLE_DESCRIPTIONS[variable]["norm_descrip"]:
+                #         st.caption(VARIABLE_DESCRIPTIONS[variable]["norm_descrip"])
+                # else:
+                #     normalize = False
+                normalize = False  # Always use raw values
 
                 region = st.selectbox(
                     "Geographic Level",
@@ -518,7 +525,9 @@ with tab3:
                     value_col = "flood_count"
                 else:
                     base_col, norm_col = var_map[variable]
-                    base_name = norm_col if (normalize and norm_col) else base_col
+                    # COMMENTED OUT - normalization disabled, always use raw values
+                    # base_name = norm_col if (normalize and norm_col) else base_col
+                    base_name = base_col  # Always use raw (non-normalized) column
                     value_col = f"{base_name}_{agg_metric.lower()}"
 
                 title = generate_title(variable, agg_metric, normalize)
@@ -633,6 +642,7 @@ with tab1:
                 )
                 st.caption(VARIABLE_DESCRIPTIONS[variable]["long_name"])
 
+                # COMMENTED OUT - normalization disabled globally, always use raw values
                 # Always use raw (non-normalized) values for timeseries
                 normalize = False
 
@@ -646,9 +656,11 @@ with tab1:
                     ts_label = f"Total {variable} by Year"
                 else:
                     base_col, norm_col_name = var_map[variable]
-                    ts_col = (
-                        norm_col_name if (normalize and norm_col_name) else base_col
-                    )
+                    # COMMENTED OUT - normalization disabled, always use raw values
+                    # ts_col = (
+                    #     norm_col_name if (normalize and norm_col_name) else base_col
+                    # )
+                    ts_col = base_col  # Always use raw (non-normalized) column
                     ts_label = f"Total {variable} by Year"
 
                 current_colors = COLOR_PALETTES[variable]
