@@ -143,7 +143,11 @@ def generate_title(variable, agg_metric, normalize):
 
 
 # Set title
-st.set_page_config(page_title="Global Flood Analysis Dashboard", layout="wide")
+st.set_page_config(
+    page_title="Global Flood Analysis Dashboard",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
 
 # Read in data - will load appropriate file based on region selection
@@ -214,12 +218,19 @@ st.markdown(
 
     /* Mobile-specific: wrap tabs to multiple rows on small screens */
     @media (max-width: 768px) {
+        /* Prevent horizontal scrolling */
+        html, body {
+            overflow-x: hidden !important;
+            max-width: 100vw !important;
+        }
+
         /* Remove all padding/margins to use full screen width */
         .main .block-container {
             padding-left: 1rem !important;
             padding-right: 1rem !important;
             padding-top: 1rem !important;
             max-width: 100% !important;
+            overflow-x: hidden !important;
         }
 
         /* Stack columns vertically on mobile and force full width */
@@ -233,14 +244,23 @@ st.markdown(
 
         /* Force horizontal block containers to stack vertically */
         [data-testid="stHorizontalBlock"] {
-            flex-direction: column !important;
-            gap: 0 !important;
+            display: block !important;
+            width: 100% !important;
         }
 
-        /* Remove gap between columns */
+        /* Remove gap between columns and force them to display as blocks */
         [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+            display: block !important;
+            width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
+            flex: none !important;
+        }
+
+        /* Override any min-width constraints from Streamlit */
+        [data-testid="stHorizontalBlock"] > [data-testid="column"] > div {
+            width: 100% !important;
+            min-width: 100% !important;
         }
 
         /* Ensure plot containers use full width */
