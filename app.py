@@ -178,44 +178,6 @@ def load_land_outline():
 st.markdown(
     """
     <style>
-    /* Tabs - Full width tab style */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 0px;
-        background-color: #e0e0e0 !important;
-        width: 100%;
-        display: flex;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .stTabs [data-baseweb="tab-list"] button {
-        font-size: 1.2rem;
-        font-weight: 600;
-        background-color: #d3d3d3 !important;
-        border-radius: 0px;
-        padding: 16px 24px;
-        border: none;
-        border-bottom: 3px solid transparent;
-        flex: 1;
-        min-width: fit-content;
-        white-space: nowrap;
-        opacity: 1 !important;
-    }
-
-    .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {
-        background-color: white !important;
-        border-bottom: 3px solid #003D5C;
-        opacity: 1 !important;
-    }
-
-    .stTabs [data-baseweb="tab-list"] button:hover {
-        background-color: #c0c0c0 !important;
-    }
-
-    .stTabs [data-baseweb="tab-border"] {
-        display: none;
-    }
-
     /* Mobile-specific improvements */
     @media (max-width: 768px) {
         /* Better spacing for mobile */
@@ -239,18 +201,6 @@ st.markdown(
         p {
             font-size: 0.95rem !important;
             line-height: 1.4 !important;
-        }
-
-        /* Tab improvements - wrap to multiple rows */
-        .stTabs [data-baseweb="tab-list"] {
-            flex-wrap: wrap;
-            width: 100%;
-        }
-        .stTabs [data-baseweb="tab-list"] button {
-            flex: 0 0 calc(50% - 2px);
-            max-width: calc(50% - 2px);
-            font-size: 1rem;
-            padding: 12px 16px;
         }
 
         /* Make images responsive */
@@ -289,14 +239,17 @@ region_id_map = {
     "UN Subregion": "UN Subregion",
 }
 
-# Create tabs
-tab1, tab2, tab3, tab4, tab5 = st.tabs(
-    ["Global Annual Trends", "Map View", "Top Regions", "Methods", "About"]
+# Create navigation
+view = st.selectbox(
+    "Select View",
+    ["Global Annual Trends", "Map View", "Top Regions", "Methods", "About"],
+    label_visibility="collapsed"
 )
 
-# ========== MAP VIEW TAB ==========
-with tab2:
-    # Map content (now works on mobile too)
+st.markdown("---")  # Divider
+
+# ========== MAP VIEW ==========
+if view == "Map View":
 
     @st.fragment
     def map_fragment():
@@ -425,8 +378,8 @@ with tab2:
 
     map_fragment()
 
-# ========== TOP REGIONS TAB ==========
-with tab3:
+# ========== TOP REGIONS ==========
+elif view == "Top Regions":
 
     @st.fragment
     def bar_fragment():
@@ -580,8 +533,8 @@ with tab3:
 
     bar_fragment()
 
-# ========== GLOBAL ANNUAL TRENDS TAB ==========
-with tab1:
+# ========== GLOBAL ANNUAL TRENDS ==========
+elif view == "Global Annual Trends":
 
     @st.fragment
     def timeseries_fragment():
@@ -655,8 +608,8 @@ with tab1:
 
     timeseries_fragment()
 
-# ========== METHODS TAB ==========
-with tab4:
+# ========== METHODS ==========
+elif view == "Methods":
     st.markdown("## Methods")
 
     st.markdown("### Summary")
@@ -809,8 +762,8 @@ with tab4:
     """
     )
 
-# ========== ABOUT TAB ==========
-with tab5:
+# ========== ABOUT ==========
+elif view == "About":
     st.markdown("## About This Project")
 
     st.markdown("### Summary")
