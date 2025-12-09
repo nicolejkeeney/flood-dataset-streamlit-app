@@ -123,7 +123,7 @@ def main():
     flood_df_subset = flood_df_subset.dropna(subset=["mon-yr"])
 
     # Correct country assignments for problematic admin1 codes
-    print("Correcting country assignments for problematic admin1 codes...")
+    print("Correcting country assignments for admin1 codes where theres a mismatch between EM-DAT and GAUL...")
     for code, correct_country in COUNTRY_CORRECTIONS.items():
         mask = flood_df_subset["adm1_code"] == code
         if mask.any():
