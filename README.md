@@ -22,7 +22,7 @@ git clone https://github.com/nicolejkeeney/flood-dataset-streamlit-app.git
 cd flood-dataset-streamlit-app
 ```
 
-2. Create the conda environment:
+2. Create and activate the conda environment:
 ```bash
 conda env create -f conda_env.yml
 conda activate flood-app
@@ -33,7 +33,7 @@ conda activate flood-app
 streamlit run app.py
 ```
 
-The app will open in your default browser at `http://localhost:8501`.
+The app will open in your default browser at the localhost URL printed in terminal.
 
 **Deployment:** Changes pushed to `main` automatically update the live Streamlit app.
 
