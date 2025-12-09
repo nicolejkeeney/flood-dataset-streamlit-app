@@ -6,7 +6,7 @@ Streamlit app for demoing flood dataset.
 
 ## Building the app 
 
-To build the app locally, build the conda environment using conda_env.yml, then run the following command: 
+To build the app locally, build the conda environment using `conda_env.yml`, then run the following command from within the conda environment: 
 ```bash 
 streamlit run app.py 
 ```
