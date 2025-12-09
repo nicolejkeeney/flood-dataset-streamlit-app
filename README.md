@@ -4,6 +4,15 @@ Streamlit app for demoing flood dataset.
 - Check out the app at [https://flood-dataset-dashboard.streamlit.app/](https://flood-dataset-dashboard.streamlit.app/). It may need to be "woken up" if it hasn't been looked at in a while; just click the button to wake up the app, and it will regenerate in a minute or two.
 - See the comprehensive dataset generation and data analysis repository [nicolejkeeney/emdat-modis-flood-dataset/](https://github.com/nicolejkeeney/emdat-modis-flood-dataset/) for more information on the methods for generating the dataset. 
 
+## Building the app 
+
+To build the app locally, build the conda environment using conda_env.yml, then run the following command: 
+```bash 
+streamlit run app.py 
+```
+
+Once changes are pushed to `main`, the Streamlit app will automatically update. 
+
 ## Layout & Design Decisions 
 The app has 5 tabs (Global Annual Trends, Map View, Top Regions, Methods, and About) with different visualizations or informative text. For example, here's a screenshot of the Global Annual Trends tab, followed by the Map View tab:
 
