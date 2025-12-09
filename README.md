@@ -1,5 +1,5 @@
 # flood-dataset-streamlit-app
-Streamlit app for demoing flood dataset
+Streamlit app for demoing flood dataset. See the main project repository [nicolejkeeney/emdat-modis-flood-dataset/](https://github.com/nicolejkeeney/emdat-modis-flood-dataset/) for more information on the methods for generating the dataset. 
 
 ## Licenses
 
