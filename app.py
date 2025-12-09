@@ -309,6 +309,19 @@ if view == "Map View":
                     key="map_agg",
                 )
 
+            # Color scale upper limit slider
+            colorbar_max_percentile = st.slider(
+                "Colorbar Upper Limit (percentile)",
+                min_value=90,
+                max_value=100,
+                value=95,
+                step=1,
+                key="map_colorbar_max",
+            )
+            st.caption(
+                "Sets the upper bound for the color bar using percentiles. Lower values increase contrast."
+            )
+
         with col2:
             # Load data
             geo_data = load_regional_data(region)
@@ -323,6 +336,17 @@ if view == "Map View":
 
             title = generate_title(variable, agg_metric, normalize)
             current_colors = COLOR_PALETTES[variable]
+
+            # Define units for colorbar
+            variable_units = {
+                "Economic Damages": "USD",
+                "Population Affected": "People",
+                "Flooded Area": "km²",
+                "Flood Count": "Events",
+                "Avg Precipitation (Flood)": "mm/day",
+                "Avg 75th Percentile Precipitation (Flood)": "mm/day",
+            }
+            colorbar_title = variable_units.get(variable, "")
 
             # Determine location and name columns
             location_col = region_id_map[region]
@@ -339,7 +363,7 @@ if view == "Map View":
 
                 # Set color range using percentiles to improve contrast
                 vmin = geo_data[value_col].quantile(0.05)
-                vmax = geo_data[value_col].quantile(0.90)
+                vmax = geo_data[value_col].quantile(colorbar_max_percentile / 100.0)
 
                 # Create map
                 fig = px.choropleth_mapbox(
@@ -395,6 +419,9 @@ if view == "Map View":
                     title=get_plot_title_config(f"{title} by {region}"),
                     margin={"r": 0, "t": 50, "l": 0, "b": 0},
                 )
+
+                # Update colorbar to show units instead of variable name
+                fig.update_coloraxes(colorbar_title_text=colorbar_title)
 
                 st.plotly_chart(fig, use_container_width=True)
 
