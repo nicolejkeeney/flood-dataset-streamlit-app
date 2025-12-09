@@ -130,14 +130,13 @@ def generate_title(variable, agg_metric, normalize):
     if variable in precip_vars:
         return f"{agg_metric} {variable}"
 
-    # COMMENTED OUT - normalization disabled, always use raw values
-    # if normalize:
-    #     norm_labels = {
-    #         "Economic Damages": f"{agg_metric} Economic Damages (% of GDP)",
-    #         "Population Affected": f"{agg_metric} Population Affected (% of Total)",
-    #         "Flooded Area": f"{agg_metric} Flooded Area (% of Total Area)",
-    #     }
-    #     return norm_labels.get(variable, f"{agg_metric} {variable}")
+    if normalize:
+        norm_labels = {
+            "Economic Damages": f"{agg_metric} Economic Damages (% of GDP)",
+            "Population Affected": f"{agg_metric} Population Affected (% of Total)",
+            "Flooded Area": f"{agg_metric} Flooded Area (% of Total Area)",
+        }
+        return norm_labels.get(variable, f"{agg_metric} {variable}")
 
     return f"{agg_metric} {variable}"
 
@@ -271,8 +270,10 @@ if view == "Map View":
             )
             st.caption(VARIABLE_DESCRIPTIONS[variable]["long_name"])
 
-            # COMMENTED OUT - normalization disabled, always use raw values
-            normalize = False  # Always use raw values
+            normalize  = st.selectbox(
+                "Normalize Variable?",
+                [True,False]
+            )
 
             region = st.selectbox(
                 "Geographic Level",
@@ -297,9 +298,7 @@ if view == "Map View":
                 value_col = "flood_count"
             else:
                 base_col, norm_col = var_map[variable]
-                # COMMENTED OUT - normalization disabled, always use raw values
-                # base_name = norm_col if (normalize and norm_col) else base_col
-                base_name = base_col  # Always use raw (non-normalized) column
+                base_name = norm_col if (normalize and norm_col) else base_col
                 value_col = f"{base_name}_{agg_metric.lower()}"
 
             title = generate_title(variable, agg_metric, normalize)
@@ -401,8 +400,10 @@ elif view == "Top Regions":
             )
             st.caption(VARIABLE_DESCRIPTIONS[variable]["long_name"])
 
-            # COMMENTED OUT - normalization disabled, always use raw values
-            normalize = False  # Always use raw values
+            normalize  = st.selectbox(
+                "Normalize Variable?",
+                [True,False]
+            ) 
 
             region = st.selectbox(
                 "Geographic Level",
@@ -437,9 +438,7 @@ elif view == "Top Regions":
                 value_col = "flood_count"
             else:
                 base_col, norm_col = var_map[variable]
-                # COMMENTED OUT - normalization disabled, always use raw values
-                # base_name = norm_col if (normalize and norm_col) else base_col
-                base_name = base_col  # Always use raw (non-normalized) column
+                base_name = norm_col if (normalize and norm_col) else base_col
                 value_col = f"{base_name}_{agg_metric.lower()}"
 
             title = generate_title(variable, agg_metric, normalize)
@@ -554,7 +553,6 @@ elif view == "Global Annual Trends":
             )
             st.caption(VARIABLE_DESCRIPTIONS[variable]["long_name"])
 
-            # COMMENTED OUT - normalization disabled globally, always use raw values
             # Always use raw (non-normalized) values for timeseries
             normalize = False
 
@@ -567,7 +565,7 @@ elif view == "Global Annual Trends":
                 ts_col = "flood_count"
                 ts_label = f"Total {variable} by Year"
             else:
-                base_col, norm_col_name = var_map[variable]
+                base_col, _ = var_map[variable]
                 # COMMENTED OUT - normalization disabled, always use raw values
                 # ts_col = (
                 #     norm_col_name if (normalize and norm_col_name) else base_col
