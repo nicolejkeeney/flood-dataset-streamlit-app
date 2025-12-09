@@ -283,12 +283,31 @@ if view == "Map View":
                 key="map_region",
             )
 
-            agg_metric = st.selectbox(
-                "Statistic",
-                ["Mean", "Median", "Max", "Sum"],
-                index=0,
-                key="map_agg",
-            )
+            # Adjust statistic options based on variable type
+            precip_vars = [
+                "Avg Precipitation (Flood)",
+                "Avg 75th Percentile Precipitation (Flood)",
+            ]
+
+            if variable == "Flood Count":
+                st.text("Statistic: Total Count")
+                agg_metric = "Sum"  # Not used, but defined for consistency
+            elif variable in precip_vars:
+                # For precipitation, Sum doesn't make sense
+                agg_metric = st.selectbox(
+                    "Statistic",
+                    ["Mean", "Median", "Max"],
+                    index=0,
+                    key="map_agg",
+                )
+            else:
+                # For other variables, all statistics are valid
+                agg_metric = st.selectbox(
+                    "Statistic",
+                    ["Mean", "Median", "Max", "Sum"],
+                    index=0,
+                    key="map_agg",
+                )
 
         with col2:
             # Load data
@@ -318,6 +337,10 @@ if view == "Map View":
                 # Load country boundaries
                 country_borders = gpd.read_parquet(COUNTRY_FILEPATH)
 
+                # Set color range using percentiles to improve contrast
+                vmin = geo_data[value_col].quantile(0.05)
+                vmax = geo_data[value_col].quantile(0.90)
+
                 # Create map
                 fig = px.choropleth_mapbox(
                     geo_data,
@@ -325,6 +348,7 @@ if view == "Map View":
                     locations=geo_data.index,
                     color=value_col,
                     color_continuous_scale=current_colors,
+                    range_color=[vmin, vmax],
                     mapbox_style="white-bg",
                     center={"lat": 20, "lon": 0},
                     zoom=0.8,
@@ -414,12 +438,31 @@ elif view == "Top Regions":
                 key="bar_region",
             )
 
-            agg_metric = st.selectbox(
-                "Statistic",
-                ["Mean", "Median", "Max", "Sum"],
-                index=0,
-                key="bar_agg",
-            )
+            # Adjust statistic options based on variable type
+            precip_vars = [
+                "Avg Precipitation (Flood)",
+                "Avg 75th Percentile Precipitation (Flood)",
+            ]
+
+            if variable == "Flood Count":
+                st.text("Statistic: Total Count")
+                agg_metric = "Sum"  # Not used, but defined for consistency
+            elif variable in precip_vars:
+                # For precipitation, Sum doesn't make sense
+                agg_metric = st.selectbox(
+                    "Statistic",
+                    ["Mean", "Median", "Max"],
+                    index=0,
+                    key="bar_agg",
+                )
+            else:
+                # For other variables, all statistics are valid
+                agg_metric = st.selectbox(
+                    "Statistic",
+                    ["Mean", "Median", "Max", "Sum"],
+                    index=0,
+                    key="bar_agg",
+                )
 
             max_regions = 15 if region == "UN Subregion" else 30
             num_regions = st.slider(
