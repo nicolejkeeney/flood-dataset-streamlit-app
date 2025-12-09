@@ -145,7 +145,7 @@ def generate_title(variable, agg_metric, normalize):
 st.set_page_config(
     page_title="Global Flood Analysis Dashboard",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed",
 )
 
 
@@ -242,7 +242,7 @@ region_id_map = {
 view = st.selectbox(
     "Select View",
     ["Global Annual Trends", "Map View", "Top Regions", "Methods", "About"],
-    label_visibility="collapsed"
+    label_visibility="collapsed",
 )
 
 # ========== MAP VIEW ==========
@@ -270,10 +270,11 @@ if view == "Map View":
             )
             st.caption(VARIABLE_DESCRIPTIONS[variable]["long_name"])
 
-            normalize  = st.selectbox(
-                "Normalize Variable?",
-                [True,False]
-            )
+            # normalize  = st.selectbox(
+            #     "Normalize Variable?",
+            #     [True,False]
+            # )
+            normalize = False
 
             region = st.selectbox(
                 "Geographic Level",
@@ -400,10 +401,11 @@ elif view == "Top Regions":
             )
             st.caption(VARIABLE_DESCRIPTIONS[variable]["long_name"])
 
-            normalize  = st.selectbox(
-                "Normalize Variable?",
-                [True,False]
-            ) 
+            # normalize  = st.selectbox(
+            #     "Normalize Variable?",
+            #     [True,False]
+            # )
+            normalize = False
 
             region = st.selectbox(
                 "Geographic Level",
@@ -521,9 +523,7 @@ elif view == "Top Regions":
             )
 
             bar_fig.update_traces(
-                hovertemplate="<b>%{y}</b><br>"
-                + title
-                + ": %{x:.2f}<extra></extra>"
+                hovertemplate="<b>%{y}</b><br>" + title + ": %{x:.2f}<extra></extra>"
             )
 
             st.plotly_chart(bar_fig, use_container_width=True)
