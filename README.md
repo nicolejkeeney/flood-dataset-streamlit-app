@@ -43,23 +43,23 @@ The app will open in your default browser at the localhost URL printed in termin
 
 The app features 5 interactive tabs, each with independent controls for optimal performance:
 
-**Global Annual Trends**
+**Global Annual Trends**    
 Track annual trends in flood damages, affected populations, and flooded areas from 2000-2024.
 
-![global_annual_trends](https://github.com/nicolejkeeney/flood-dataset-streamlit-app/blob/main/images/global_annual_trends.png "Annual trends in flood damages")
+![global_annual_trends](https://github.com/nicolejkeeney/flood-dataset-streamlit-app/blob/main/figs/global_annual_trends.png "Annual trends in flood damages")
 
-**Map View**
+**Map View**    
 Visualize flood impacts at country, state/province, or UN subregion levels with customizable color scales and statistics.
 
-![flooded_area_map](https://github.com/nicolejkeeney/flood-dataset-streamlit-app/blob/main/images/flooded_area_map.png "Geographic distribution of flooded area")
+![flooded_area_map](https://github.com/nicolejkeeney/flood-dataset-streamlit-app/blob/main/figs/flooded_area_map.png "Geographic distribution of flooded area")
 
-**Top Regions**
+**Top Regions**    
 Identify and compare the most impacted regions using customizable statistics (mean, median, max, sum).
 
-**Methods**
+**Methods**    
 Detailed documentation of data processing, satellite analysis, and methodology.
 
-**About**
+**About**   
 Project overview and background information.
 
 The app supports multiple flood impact variables including economic damages, population affected, flooded area, flood count, and precipitation metrics. Users can select different aggregation methods (mean, median, maximum, or sum) depending on the variable and analysis needs.
