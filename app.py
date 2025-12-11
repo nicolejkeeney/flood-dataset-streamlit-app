@@ -688,7 +688,7 @@ elif view == "Methods":
     )
     st.markdown(
         """
-    - Data processing pipeline: [nicolejkeeney/emdat-modis-flood-dataset](https://github.com/nicolejkeeney/emdat-modis-flood-dataset)
+    - Data processing pipeline: [nicolejkeeney/thesis-flood-impact-analysis-2025](https://github.com/nicolejkeeney/thesis-flood-impact-analysis-2025)
     - This Streamlit app: [nicolejkeeney/flood-dataset-streamlit-app](https://github.com/nicolejkeeney/flood-dataset-streamlit-app)
     """
     )
