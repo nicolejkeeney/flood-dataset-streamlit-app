@@ -680,7 +680,7 @@ elif view == "Methods":
 
     st.markdown("### Summary")
     st.markdown(
-        "This project involved a lengthy data processing pipeline with the end goal of creating a  global dataset of inland floods from 2000–2024 at the scale of subnational regions and months. Data processing involved substantial data preparation—cleaning, infilling missing values, and standardization—as well as regridding, reprojecting, merging, and slicing-and-dicing of several datasets of different flavors to arrive at the end product. All data wrangling was performed in Python and included simple tabular data cleaning and standarization, satellite data processing using Google Earth Engine's python API, and more computationally heavy geospatial processing run on Colorado State's trusty high-performance computing cluster, Cashew."
+        "This project involved a lengthy data processing pipeline with the end goal of creating a  global dataset of inland floods from 2000–2024 at the scale of subnational regions and months. Data processing involved substantial data preparation—cleaning, infilling missing values, and standardization—as well as regridding, reprojecting, merging, and slicing-and-dicing of several datasets of different flavors to arrive at the end product. All data wrangling was performed in Python and included simple tabular data cleaning and standarization, satellite data processing using Google Earth Engine's python API, and more computationally heavy geospatial processing run on CSU's high-performance computing cluster."
     )
     st.markdown("")
     st.markdown(
