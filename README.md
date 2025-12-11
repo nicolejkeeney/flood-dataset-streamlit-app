@@ -5,7 +5,7 @@ An interactive Streamlit application for exploring a spatially and temporally di
 **Live App:** [flood-dataset-dashboard.streamlit.app](https://flood-dataset-dashboard.streamlit.app/)
 *Note: The app may take 1-2 minutes to load if it hasn't been accessed recently.*
 
-**Dataset & Methods:** [nicolejkeeney/emdat-modis-flood-dataset](https://github.com/nicolejkeeney/emdat-modis-flood-dataset/)
+**Dataset & Methods:** [nicolejkeeney/thesis-flood-impact-analysis-2025](https://github.com/nicolejkeeney/thesis-flood-impact-analysis-2025/)
 *Full documentation on data processing, satellite analysis, and methodology.*
 
 ## Local Development
